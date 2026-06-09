@@ -3,7 +3,7 @@
 '''
 
 class Case():
-    def __init__(self, position: tuple ,valeur: int):
+    def __init__(self, position: list ,valeur: int):
         self.__position = position # position de la case
         self.__valeur = valeur # valeur de la case
     
