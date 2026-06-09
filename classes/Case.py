@@ -60,6 +60,19 @@ class Case():
         else:
             return False
         
+# ------------------------------------------------------ #  
+        
+    def verif_valeur(self) -> bool:
+        '''
+        Vérifie si la valeur de la case est bonne ou non.
+        Renvoie True si la valeur est bonne
+        False sinon.
+        '''
+        if self.get_value() < 0 or self.get_value() > 5:
+            return False
+        else:
+            return True
+        
         
         
     
