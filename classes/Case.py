@@ -39,12 +39,22 @@ class Case():
     
     # Comparateurs
     def compare_valeur(self, valeur: int) -> bool:
+        '''
+        Compare la valeur de la case à celle d'un entier.
+        Si la valeur de la case est égale à l'entier, alors True est renvoyé.
+        Sinon on renvoie False.
+        '''
         if self.get_value() == valeur:
             return True
         else:
             return False
         
     def compare_pos(self, pos_x, pos_y):
+        '''
+        Compare les coordonnées de la case à celle insérés dans la fonction.
+        Si les coordonnées sont les mêmes, alors on renvoie True
+        Sinon False.
+        '''
         if self.get_x() == pos_x and self.get_y() == pos_y:
             return True
         else:
