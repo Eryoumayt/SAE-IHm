@@ -1,4 +1,7 @@
-# SAE Ihm
+# SAE IHM
 
+Travail du groupe 5 :
+- Isaac PILE-YARD
+- Youenn DEZITTER
+- Arthur LECLERC
 
-Travail fait par Isaac Pile-Yard, Youenn Dezitter et Arthur LECLERC
