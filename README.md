@@ -1,4 +1,4 @@
 # SAE Ihm
 
 
-Travail fait par Isaac Pile-Yard et Youenn Dezitter
+Travail fait par Isaac Pile-Yard, Youenn Dezitter et Arthur LECLERC
