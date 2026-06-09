@@ -26,6 +26,22 @@ class Case():
         return self.__valeur
     
     
+    # Autres méthodes
+    def compare_valeur(self, valeur: int) -> bool:
+        if self.get_value() == valeur:
+            return True
+        else:
+            return False
+        
+    def compare_pos(self, pos_x, pos_y):
+        if self.get_x() == pos_x and self.get_y() == pos_y:
+            return True
+        else:
+            return False
+    
+    
+    
+    
     
     
     
