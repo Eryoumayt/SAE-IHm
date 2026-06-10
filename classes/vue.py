@@ -1,6 +1,7 @@
 import sys
 import json
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QFileDialog
+from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt
 
 
@@ -20,10 +21,10 @@ class Vue(QMainWindow):
         # Création du menu
         self.__creer_menu()
 
-        def __creer_menu(self):
+    def __creer_menu(self):
         menubar = self.menuBar()
 
-        #  Menu Fichier 
+        #  Menu Fichier
         menu_fichier = menubar.addMenu("Fichier")
 
         action_charger = QAction("Charger une grille", self)
@@ -36,7 +37,7 @@ class Vue(QMainWindow):
         action_quitter.triggered.connect(self.close)
         menu_fichier.addAction(action_quitter)
 
-        #  Menu Jeu 
+        #  Menu Jeu
         menubar.addMenu("Jeu")
 
     def __charger_grille(self):
@@ -54,6 +55,7 @@ class Vue(QMainWindow):
     def get_grille_data(self) -> dict:
         # Renvoie les données brutes de la grille chargée
         return self.__grille_data
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
