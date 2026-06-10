@@ -7,22 +7,20 @@ class Case():
         self.__position = position # position de la case
         self.__valeur = valeur # valeur de la case
     
-    # Setter
-    def set_x(self, new_x: int):
-        # Change la position x de la case
-        self.__position[0] = new_x
-        
-    def set_y(self, new_y: int):
-        # Change la position y de la case
-        self.__position[1] = new_y
-        
-    def set_valeur(self, new_val: int):
+    # Modification et récupération de la valeur
+    @property
+    def valeur(self):
+        # Renvoie la valeur de la case
+        return self.__valeur
+    
+    @valeur.setter
+    def valeur(self, new_val: int):
         # Change la valeur de la case
         self.__valeur = new_val    
     
 # ------------------------------------------------------ #
 
-    # Getter
+    # Coordonnées du point
     def get_x(self):
         # Renvoie la position x de la case
         return self.__position[0]
@@ -30,11 +28,7 @@ class Case():
     def get_y(self):
         # Renvoie la position y de la case
         return self.__position[1]
-    
-    def get_value(self):
-        # Renvoie la valeur de la case
-        return self.__valeur
-    
+
 # ------------------------------------------------------ #    
     
     # Comparateurs
