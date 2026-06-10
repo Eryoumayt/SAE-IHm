@@ -8,8 +8,8 @@ class Grille():
         self.__dico_brut = self.from_json(self.__path)
         
         self.__grille: dict = {} 
-        for i in range(len(self.__dico_brut) - 1): 
-            self.__grille["motif"+i] = Motif(self.__dico_brut[i]) 
+        for i in self.__dico_brut: 
+            self.__grille[i] = Motif(self.__dico_brut[i]) 
             
             
     def from_json(self, file_path: str) -> dict:
@@ -31,15 +31,31 @@ class Grille():
             for j in i:
                 nb_cases += 1
                 
-                if j[2] != 0:
+                if j.valeur != 0:
                     nb_cases_remplies += 1
                     
         if nb_cases == nb_cases_remplies:
             return True
         else:
             return False 
-            
         
+        
+    def get_motif(self, x: int, y: int):
+        '''
+        Fonction qui permet de savoir le motif auquel appartient une case
+        en fonction de ses coordonnées (x, y)
+        '''
+        pass
+            
+    def is_empty(self) -> bool:
+        '''
+        Fonction qui permet de savoir si la grille
+        est vide ou non
+        Si elle est vide, la fonction renvoie True
+        False sinon
+        '''
+        pass
+    
     
         
     
