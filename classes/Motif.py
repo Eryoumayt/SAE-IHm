@@ -11,6 +11,15 @@ class Motif():
     def get_cases(self) -> list:
         # Renvoie la liste des cases du motif
         return self.__cases
+    
+    def get_cases(self, x: int, y: int):
+        # Renvoie une case en fonction de ses coordonnées
+        for i in self.get_cases:
+            if i[0] == x and i[1] == y:
+                return i
+        
+        print("Aucune case ayant pour coordonnées (x =",x + ", y =", y + ")")
+        return None
 
     def get_taille(self) -> int:
         # Renvoie le nombre de cases du motif
@@ -20,7 +29,7 @@ class Motif():
         # Renvoie la liste des valeurs actuelles des cases
         valeurs = []
         for case in self.__cases:
-            valeurs.append(case.get_value())
+            valeurs.append(case.valeur())
         return valeurs
 
     def get_valeurs_manquantes(self) -> list:
@@ -30,3 +39,22 @@ class Motif():
             if v not in self.get_valeurs():
                 manquantes.append(v)
         return manquantes
+    
+# ---------------------------------------------- #    
+    
+    def multiples(self, valeur: int) -> bool:
+        '''
+        Fonction qui vérifie si une valeur est présente 
+        plusieurs fois dans un même motif
+        
+        Si c'est le cas, alors la fonction renvoie True
+        False sinon 
+        '''
+        liste_valeurs: list = []
+        for i in self.get_cases():
+            if i[2] not in liste_valeurs:
+                liste_valeurs.append(i[2])
+            else:
+                return True
+            
+        return False

@@ -32,13 +32,13 @@ class Case():
 # ------------------------------------------------------ #    
     
     # Comparateurs
-    def compare_valeur(self, valeur: int) -> bool:
+    def compare_valeur(self, v: int) -> bool:
         '''
         Compare la valeur de la case à celle d'un entier.
         Si la valeur de la case est égale à l'entier, alors True est renvoyé.
         Sinon on renvoie False.
         '''
-        if self.get_value() == valeur:
+        if self.valeur() == v:
             return True
         else:
             return False
@@ -62,7 +62,7 @@ class Case():
         Renvoie True si la valeur est bonne
         False sinon.
         '''
-        if self.get_value() < 0 or self.get_value() > 5:
+        if self.valeur() < 0 or self.valeur() > 5:
             return False
         else:
             return True
