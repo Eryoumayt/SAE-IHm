@@ -1,7 +1,7 @@
 import sys
 import json
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout
-from PyQt6.QtGui import QAction
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit
+from PyQt6.QtGui import QAction, QFont, QIntValidator
 from PyQt6.QtCore import Qt
 
 TAILLE_CASE = 60
@@ -9,7 +9,7 @@ TAILLE_CASE = 60
 
 class GrilleWidget(QWidget):
     '''
-    affiche la grille de jeu.
+    Composant qui affiche la grille de jeu.
     '''
     def __init__(self):
         super().__init__()
@@ -18,23 +18,63 @@ class GrilleWidget(QWidget):
         self.__layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.__layout)
 
+        # Dictionnaire (row, col)
+        self.__entries = {}
+
     def afficher(self, grille_data: dict):
         '''
-        Construit et affiche la grille à partir de JSON brutes.
+        Construit et affiche la grille à partir des données JSON brutes.
+        bordures en gras .
+        Les cases vides, éditables.
         '''
         # Vide l'ancienne grille
         self.__vider()
+        self.__entries = {}
 
-        # Parcourt chaque motif et crée un label coloré pour chaque case
-        for cases in grille_data.values():
+        #  carte motif pour calculer bordure
+        carte_motifs = {}
+        for idx, cases in enumerate(grille_data.values()):
+            for case in cases:
+                carte_motifs[(case[0], case[1])] = idx
+
+        # Parcourt les motif et crée un widget pour chaque case
+        for idx, cases in enumerate(grille_data.values()):
             for case in cases:
                 row = case[0]
                 col = case[1]
-                label = QLabel()
-                label.setFixedSize(TAILLE_CASE, TAILLE_CASE)
-                label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                label.setStyleSheet("background-color: lightgray; border: 1px solid gray;")
-                self.__layout.addWidget(label, row, col)
+                valeur = case[2]
+
+                # Calcul des bordures selon les motifs a coté
+                top    = "3px solid black" if carte_motifs.get((row-1, col), -1) != idx else "1px solid gray"
+                bottom = "3px solid black" if carte_motifs.get((row+1, col), -1) != idx else "1px solid gray"
+                left   = "3px solid black" if carte_motifs.get((row, col-1), -1) != idx else "1px solid gray"
+                right  = "3px solid black" if carte_motifs.get((row, col+1), -1) != idx else "1px solid gray"
+
+                style = (
+                    f"background-color: lightgray;"
+                    f"border-top: {top}; border-bottom: {bottom};"
+                    f"border-left: {left}; border-right: {right};"
+                )
+
+                if valeur != 0:
+                    # Case avec valeur initiale
+                    label = QLabel(str(valeur))
+                    label.setFixedSize(TAILLE_CASE, TAILLE_CASE)
+                    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    label.setFont(QFont("Arial", 16, QFont.Weight.Bold))
+                    label.setStyleSheet(style)
+                    self.__layout.addWidget(label, row, col)
+                else:
+                    # Case vide(peut editer la case)
+                    entry = QLineEdit()
+                    entry.setFixedSize(TAILLE_CASE, TAILLE_CASE)
+                    entry.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    entry.setFont(QFont("Arial", 16))
+                    entry.setMaxLength(1)
+                    entry.setValidator(QIntValidator(1, 5))
+                    entry.setStyleSheet(style)
+                    self.__layout.addWidget(entry, row, col)
+                    self.__entries[(row, col)] = entry
 
     def __vider(self):
         '''
@@ -45,13 +85,17 @@ class GrilleWidget(QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
+    def get_entries(self) -> dict:
+        # Renvoie le dictionnaire des cases éditables
+        return self.__entries
+
 
 class Vue(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Néonaure")
 
-        # Données brutes de la grille chargée
+        # Données brutes de la grille 
         self.__grille_data = None
 
         # Label d'accueil
@@ -102,6 +146,10 @@ class Vue(QMainWindow):
     def get_grille_data(self) -> dict:
         # Renvoie les données brutes de la grille chargée
         return self.__grille_data
+
+    def get_grille_widget(self) -> GrilleWidget:
+        # Renvoie le composant grille
+        return self.__grille_widget
 
 
 if __name__ == "__main__":
