@@ -3,7 +3,7 @@ import os
 import json
 from PyQt6.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit, QMessageBox
 from PyQt6.QtGui import QAction, QFont, QIntValidator
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 
 TAILLE_CASE = 60
 
@@ -21,6 +21,7 @@ class GrilleWidget(QWidget):
         self.__layout = QGridLayout()
         self.__layout.setSpacing(0)
         self.__layout.setContentsMargins(0, 0, 0, 0)
+
         # aligne la grille en haut à gauche pour éviter l'étirement en plein écran#
         self.__layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.setLayout(self.__layout)
@@ -116,6 +117,11 @@ class Vue(QMainWindow):
 
         # données brutes de la grille chargée#
         self.__grille_data = None
+        # chrono pour mesurer le temps de jeu#
+        self.__temps = 0
+        self.__chrono = QTimer(self)
+        self.__chrono.timeout.connect(self.__incrementer)
+        self.__label_chrono = QLabel("00:00")
 
         # label d'accueil affiché au démarrage#
         self.__label_accueil = QLabel("Bienvenue dans Néonaure !\nChargez une grille via le menu Fichier.")
@@ -246,6 +252,26 @@ class Vue(QMainWindow):
                 json.dump(grille_sauvegarde, f, indent=4)
             QMessageBox.information(self, "Succès", "Grille sauvegardée.")
 
+
+    def __incrementer(self):
+        self.__temps += 1
+        minutes = self.__temps // 60
+        secondes = self.__temps % 60
+        self.__label_chrono.setText(f"{minutes:02d}:{secondes:02d}")
+
+    def demarrer_chrono(self):
+        self.__temps = 0
+        self.__label_chrono.setText("00:00")
+        self.__chrono.start(1000)  # toutes les 1000ms = 1s
+
+    def arreter_chrono(self):
+        self.__chrono.stop()
+
+    def reinitialiser_chrono(self):
+        self.__chrono.stop()
+        self.__temps = 0
+        self.__label_chrono.setText("00:00")
+
     #-----------getter-----------------#
 
     def get_grille_data(self) -> dict:
@@ -284,3 +310,5 @@ class Vue(QMainWindow):
         # renvoie la méthode sauvegarder grille pour le contrôleur#
         return self.__sauvegarder_grille
 
+    def get_label_chrono(self):
+        return self.__label_chrono
