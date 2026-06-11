@@ -41,7 +41,17 @@ class controller():
         with open(chemin, 'r', encoding='utf-8') as f:
             donnees_brutes = json.load(f)
         self.view.get_grille_widget().afficher(donnees_brutes)
-        self.donnees_brutes = donnees_brutes    
+        self.donnees_brutes = donnees_brutes
+        
+        # Afficher la grille au centre de la fenêtre
+        from PyQt6.QtWidgets import QHBoxLayout, QWidget
+        conteneur = QWidget()
+        layout_centre = QHBoxLayout()
+        layout_centre.addStretch()
+        layout_centre.addWidget(self.view.get_grille_widget())
+        layout_centre.addStretch()
+        conteneur.setLayout(layout_centre)
+        self.view.setCentralWidget(conteneur)
     
         
         
@@ -129,11 +139,4 @@ class controller():
 
     
     
-        # try:
-        #     with open('grilleEx1.json', 'r', encoding='utf-8') as f:
-        #         data = json.load(f)
-        # except FileNotFoundError:
-        #     print("Fichier non trouvé.")
-        # except json.JSONDecodeError:
-        #     print("Erreur : Le fichier n'est pas un JSON valide.")
-            
+   
