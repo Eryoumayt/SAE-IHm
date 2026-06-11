@@ -1,6 +1,6 @@
 import sys
 import json
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit, QMessageBox
+from PyQt6.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit, QMessageBox
 from PyQt6.QtGui import QAction, QFont, QIntValidator
 from PyQt6.QtCore import Qt
 
@@ -169,7 +169,8 @@ class Vue(QMainWindow):
 
     def __charger_grille(self):
         '''
-        ouvre un dosser pour charger un fichier JSON.
+        ouvre un dossier pour charger un fichier JSON.
+    
         '''
         chemin, _ = QFileDialog.getOpenFileName(
             self,
@@ -179,13 +180,19 @@ class Vue(QMainWindow):
         )
         if chemin:
             with open(chemin, 'r', encoding='utf-8') as f:
-                self.__grille_data = json.load(f)
+                 self.__grille_data = json.load(f)
             self.__label_accueil.hide()
             self.__grille_widget.afficher(self.__grille_data)
-            # remplace le label d'accueil par la grille#
-            self.setCentralWidget(self.__grille_widget)
-            # adapte la taille de la fenêtre à la grille#
-            self.adjustSize()
+
+            # met la grille au milieu des écrans#
+            conteneur = QWidget()
+            layout_centre = QHBoxLayout()
+            # espace ajustable sur les côtés pour centrer
+            layout_centre.addStretch()
+            layout_centre.addWidget(self.__grille_widget)
+            layout_centre.addStretch()
+            conteneur.setLayout(layout_centre)
+            self.setCentralWidget(conteneur)
 
     def __sauvegarder_grille(self):
         '''
