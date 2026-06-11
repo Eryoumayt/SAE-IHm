@@ -81,7 +81,33 @@ class GrilleWidget(QWidget):
                     entry.setStyleSheet(style)
                     self.__layout.addWidget(entry, row, col)
                     self.__entries[(row, col)] = entry
+                    
+    def surligner_conflits(self, conflits):
+        """Surligne en rouge les cases en conflit de voisinage.
 
+        Args:
+            conflits (set): Ensemble de tuples (row, col) des cases en conflit.
+        """
+        # D'abord remettre toutes les cases en style normal#
+        for (row, col), entry in self.__entries.items():
+            self.__reset_style(entry)
+
+        # Puis mettre en rouge les cases en conflit#
+        for (row, col) in conflits:
+            entry = self.__entries.get((row, col))
+            if entry is not None:
+                entry.setStyleSheet(entry.styleSheet() + "background-color: red;")
+
+    def __reset_style(self, entry):
+        """Remet le fond d'une case à la couleur par défaut.
+
+        Args:
+            entry (QLineEdit): La case à réinitialiser.
+        """
+        style_actuel = entry.styleSheet()
+        nouveau_style = style_actuel.replace("background-color: red;", "background-color: lightgray;")
+        entry.setStyleSheet(nouveau_style)               
+       
     # -------------------------------------------------------- #
 
     def __vider(self):
@@ -163,6 +189,9 @@ class Vue(QMainWindow):
 
         self.__action_nouvelle = QAction("Nouvelle partie", self)
         menu_jeu.addAction(self.__action_nouvelle)
+        
+        self.__action_verifier_voisinage = QAction("Vérifier voisinage", self)
+        menu_jeu.addAction(self.__action_verifier_voisinage)
 
         # menu apparence#
         menu_apparence = menubar.addMenu("Apparence")
@@ -312,3 +341,8 @@ class Vue(QMainWindow):
 
     def get_label_chrono(self):
         return self.__label_chrono
+    
+    def get_action_verifier_voisinage(self):
+        return self.__action_verifier_voisinage
+
+    
