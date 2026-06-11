@@ -1,8 +1,9 @@
 import sys
 import json
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit, QMessageBox
+from PyQt6.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit, QMessageBox
 from PyQt6.QtGui import QAction, QFont, QIntValidator
 from PyQt6.QtCore import Qt
+from themes import THEME_CLAIR, THEME_SOMBRE
 
 TAILLE_CASE = 60
 
@@ -106,9 +107,7 @@ class GrilleWidget(QWidget):
         return self.__entries
 
 
-
 # ------- vue principal-------- #
-
 
 class Vue(QMainWindow):
     def __init__(self):
@@ -122,13 +121,12 @@ class Vue(QMainWindow):
         self.__label_accueil = QLabel("Bienvenue dans Néonaure !\nChargez une grille via le menu Fichier.")
         self.__label_accueil.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setCentralWidget(self.__label_accueil)
-        
+
         # composant grille, pas encore affiché#
         self.__grille_widget = GrilleWidget()
         self.__creer_menu()
 
-
-    # ------------------- menu ------------------                            #
+    # ------------------- menu ------------------#
 
     def __creer_menu(self):
         menubar = self.menuBar()
@@ -136,40 +134,55 @@ class Vue(QMainWindow):
         #  menu fichier#
         menu_fichier = menubar.addMenu("Fichier")
 
-        action_charger = QAction("Charger une grille", self)
-        action_charger.triggered.connect(self.__charger_grille)
-        menu_fichier.addAction(action_charger)
+        self.__action_charger = QAction("Charger une grille", self)
+        menu_fichier.addAction(self.__action_charger)
 
-        action_sauvegarder = QAction("Sauvegarder la grille", self)
-        action_sauvegarder.triggered.connect(self.__sauvegarder_grille)
-        menu_fichier.addAction(action_sauvegarder)
+        self.__action_sauvegarder = QAction("Sauvegarder la grille", self)
+        menu_fichier.addAction(self.__action_sauvegarder)
 
         menu_fichier.addSeparator()
 
-        action_quitter = QAction("Quitter", self)
-        action_quitter.triggered.connect(self.close)
-        menu_fichier.addAction(action_quitter)
+        self.__action_quitter = QAction("Quitter", self)
+        self.__action_quitter.triggered.connect(self.close)
+        menu_fichier.addAction(self.__action_quitter)
 
         #  menu jeu#
         menu_jeu = menubar.addMenu("Jeu")
 
-        action_verifier = QAction("Vérifier la solution", self)
-        action_verifier.triggered.connect(self.__verifier)
-        menu_jeu.addAction(action_verifier)
+        self.__action_verifier = QAction("Vérifier la solution", self)
+        menu_jeu.addAction(self.__action_verifier)
 
-        action_resoudre = QAction("Résoudre", self)
-        action_resoudre.triggered.connect(self.__resoudre)
-        menu_jeu.addAction(action_resoudre)
+        self.__action_resoudre = QAction("Résoudre", self)
+        menu_jeu.addAction(self.__action_resoudre)
 
-        action_nouvelle = QAction("Nouvelle partie", self)
-        action_nouvelle.triggered.connect(self.__nouvelle_partie)
-        menu_jeu.addAction(action_nouvelle)
+        self.__action_nouvelle = QAction("Nouvelle partie", self)
+        menu_jeu.addAction(self.__action_nouvelle)
 
-    #--------------- action jeu ----------------- #
+        # menu apparence#
+        menu_apparence = menubar.addMenu("Apparence")
+
+        action_clair = QAction("Thème clair", self)
+        # applique le thème clair sur toute la fenêtre#
+        action_clair.triggered.connect(lambda: self.__appliquer_theme(THEME_CLAIR))
+        menu_apparence.addAction(action_clair)
+
+        action_sombre = QAction("Thème sombre", self)
+        # applique le thème sombre sur toute la fenêtre#
+        action_sombre.triggered.connect(lambda: self.__appliquer_theme(THEME_SOMBRE))
+        menu_apparence.addAction(action_sombre)
+
+    #--------------- action fichier ----------------- #
+
+    def __appliquer_theme(self, theme: str):
+        '''
+        Applique un thème QSS sur toute la fenêtre.
+        '''
+        # setStyleSheet applique le style sur la fenêtre et tous ses enfants#
+        self.setStyleSheet(theme)
 
     def __charger_grille(self):
         '''
-        ouvre un dosser pour charger un fichier JSON.
+        ouvre un dossier pour charger un fichier JSON.
         '''
         chemin, _ = QFileDialog.getOpenFileName(
             self,
@@ -182,10 +195,16 @@ class Vue(QMainWindow):
                 self.__grille_data = json.load(f)
             self.__label_accueil.hide()
             self.__grille_widget.afficher(self.__grille_data)
-            # remplace le label d'accueil par la grille#
-            self.setCentralWidget(self.__grille_widget)
-            # adapte la taille de la fenêtre à la grille#
-            self.adjustSize()
+
+            # met la grille au milieu des écrans#
+            conteneur = QWidget()
+            layout_centre = QHBoxLayout()
+            # espace ajustable sur les côtés pour centrer#
+            layout_centre.addStretch()
+            layout_centre.addWidget(self.__grille_widget)
+            layout_centre.addStretch()
+            conteneur.setLayout(layout_centre)
+            self.setCentralWidget(conteneur)
 
     def __sauvegarder_grille(self):
         '''
@@ -223,38 +242,8 @@ class Vue(QMainWindow):
                 json.dump(grille_sauvegarde, f, indent=4)
             QMessageBox.information(self, "Succès", "Grille sauvegardée.")
 
-    # --------option menu----------  #
-    
-    #option menu a implementer dans controleur( youen )#
-    def __verifier(self):
-        '''
-        vérification de la solution 
-        '''
-        if self.__grille_data is None:
-            QMessageBox.warning(self, "Attention", "Aucune grille chargée.")
-            return
-        QMessageBox.information(self, "Vérifier", "Non implémenté.")
+    #-----------getter-----------------#
 
-    def __resoudre(self):
-        '''
-        resolution de la grille 
-        '''
-        if self.__grille_data is None:
-            QMessageBox.warning(self, "Attention", "Aucune grille chargée.")
-            return
-        QMessageBox.information(self, "Résoudre", "Non implémenté.")
-
-    def __nouvelle_partie(self):
-        '''
-        remet à zéro toutes les cases saisies par le joueur.
-        '''
-        if self.__grille_data is None:
-            QMessageBox.warning(self, "Attention", "Aucune grille chargée.")
-            return
-        self.__grille_widget.nouvelle_partie()
-
- 
-    # -----------getter----------------- #
     def get_grille_data(self) -> dict:
         # renvoie les données brutes de la grille chargée#
         return self.__grille_data
@@ -263,11 +252,31 @@ class Vue(QMainWindow):
         # renvoie le composant grille#
         return self.__grille_widget
 
+    def get_action_charger(self):
+        # renvoie l'action charger pour le contrôleur#
+        return self.__action_charger
 
-# ----------------lancement------------------------- #
+    def get_action_sauvegarder(self):
+        # renvoie l'action sauvegarder pour le contrôleur#
+        return self.__action_sauvegarder
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    vue = Vue()
-    vue.show()
-    sys.exit(app.exec())
+    def get_action_verifier(self):
+        # renvoie l'action vérifier pour le contrôleur#
+        return self.__action_verifier
+
+    def get_action_resoudre(self):
+        # renvoie l'action résoudre pour le contrôleur#
+        return self.__action_resoudre
+
+    def get_action_nouvelle(self):
+        # renvoie l'action nouvelle partie pour le contrôleur#
+        return self.__action_nouvelle
+
+    def get_charger_grille(self):
+        # renvoie la méthode charger grille pour le contrôleur#
+        return self.__charger_grille
+
+    def get_sauvegarder_grille(self):
+        # renvoie la méthode sauvegarder grille pour le contrôleur#
+        return self.__sauvegarder_grille
+
