@@ -29,8 +29,10 @@ class Grille():
         
         for i in self.__grille.values():
             for j in i.get_cases():
+                # Comptage du nombre de cases
                 nb_cases += 1
                 
+                # Comptage du nombre de cases vides (valeur différente 0)
                 if j.valeur != 0:
                     nb_cases_remplies += 1
                     

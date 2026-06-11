@@ -52,8 +52,10 @@ class Motif():
         '''
         liste_valeurs: list = []
         for i in self.get_cases():
-            if i.valeur != 0:
+            if i.valeur != 0: # On ignore les cases vides
                 if i.valeur not in liste_valeurs:
+                    # On ajoute les valeurs dans une liste et si elle est déjà dans la liste
+                    # Alors c'est un doublon (donc on renvoie True)
                     liste_valeurs.append(i.valeur)
                 else:
                     return True
