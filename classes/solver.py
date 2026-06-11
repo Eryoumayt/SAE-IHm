@@ -174,11 +174,3 @@ class solver():
                     self.ma_liste.append([ligne, colonne,nom])
 
         return 
-
-# Verifie que la grille est valide ou pas 
-s = solver("Grille/grille6.json")
-resultat = s.resolver()
-if resultat:
-    print("Fini ! Solution trouvee")
-else:
-    print("Pas de solution")
