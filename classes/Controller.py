@@ -1,6 +1,6 @@
 import json
 from PyQt6.QtWidgets import  QFileDialog,QMessageBox
-import solver as solver
+from solver import solver
 from Grille import Grille
 
 
