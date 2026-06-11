@@ -1,9 +1,22 @@
 import json
 from PyQt6.QtWidgets import  QFileDialog,QMessageBox
-import solver
+import solver as solver
 from Grille import Grille
 
 
+from PyQt6.QtCore import QThread, pyqtSignal
+
+class SolverWorker(QThread):
+    termine = pyqtSignal(bool, object)
+    
+    def __init__(self, chemin):
+        super().__init__()
+        self.chemin = chemin
+    
+    def run(self):
+        s = solver(self.chemin)
+        resultat = s.resolver()
+        self.termine.emit(resultat, s.grille)
 
 class controller():
     def __init__(self, model, view):
@@ -120,23 +133,35 @@ class controller():
         
         with open("temp_grille.json", 'w', encoding='utf-8') as f:
             json.dump(self.donnees_brutes, f)
-            
         
-     
-        s = solver("temp_grille.json")
+        # Désactiver le bouton pendant la résolution
+        self.view.get_action_resoudre().setEnabled(False)
+        
+        # Lancer le solveur dans un fil séparé
+        self.worker = SolverWorker("temp_grille.json")
+        self.worker.termine.connect(self.__on_solver_fini)
+        self.worker.start()
 
-        resultat = s.resolver()
+    def __on_solver_fini(self, resultat, grille):
+        # Réactiver le bouton
+        self.view.get_action_resoudre().setEnabled(True)
         
+        if resultat:
+            self.view.get_grille_widget().afficher(grille)
             
-
-        
-        if resultat == True:
-            self.view.get_grille_widget().afficher(s.grille)
+            # Re-centrer la grille
+            from PyQt6.QtWidgets import QHBoxLayout, QWidget
+            conteneur = QWidget()
+            layout_centre = QHBoxLayout()
+            layout_centre.addStretch()
+            layout_centre.addWidget(self.view.get_grille_widget())
+            layout_centre.addStretch()
+            conteneur.setLayout(layout_centre)
+            self.view.setCentralWidget(conteneur)
+            
             QMessageBox.information(self.view, "Résolution", "Solution trouvée !")
-        if resultat == False:
+        else:
             QMessageBox.warning(self.view, "Résolution échouée", "Aucune solution n'a été trouvée pour cette grille.")
-    
-
-    
-    
+        
+        
    
