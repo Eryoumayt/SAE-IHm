@@ -52,9 +52,10 @@ class Motif():
         '''
         liste_valeurs: list = []
         for i in self.get_cases():
-            if i.valeur not in liste_valeurs:
-                liste_valeurs.append(i.valeur)
-            else:
-                return True
+            if i.valeur != 0:
+                if i.valeur not in liste_valeurs:
+                    liste_valeurs.append(i.valeur)
+                else:
+                    return True
             
         return False

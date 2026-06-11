@@ -28,7 +28,7 @@ class Grille():
         nb_cases_remplies: int = 0
         
         for i in self.__grille.values():
-            for j in i:
+            for j in i.get_cases():
                 nb_cases += 1
                 
                 if j.valeur != 0:
@@ -40,21 +40,41 @@ class Grille():
             return False 
         
         
-    def get_motif(self, x: int, y: int):
+    def get_motif(self, x: int, y: int) -> Motif:
         '''
         Fonction qui permet de savoir le motif auquel appartient une case
         en fonction de ses coordonnées (x, y)
+        Renvoie un motif si elle trouve un point avec ces coordonnées
+        None sinon
         '''
-        pass
+        for i in self.__grille.values():
+            for j in i.get_cases():
+                if j.get_x() == x and j.get_y() == y:
+                    return i
+        return None 
+        
             
-    def is_empty(self) -> bool:
+    def is_valid(self) -> bool:
         '''
         Fonction qui permet de savoir si la grille
-        est vide ou non
-        Si elle est vide, la fonction renvoie True
+        est valide ou non
+        Si elle est valide, la fonction renvoie True
         False sinon
         '''
-        pass
+        if self.is_full() == False:
+            return False
+        
+        for i in self.__grille.values():
+            if i.multiples() == True:
+                return False
+        
+        return True
+            
+        
+        
+        
+    
+        
     
     
         

@@ -38,7 +38,7 @@ class Case():
         Si la valeur de la case est égale à l'entier, alors True est renvoyé.
         Sinon on renvoie False.
         '''
-        if self.valeur() == v:
+        if self.valeur == v:
             return True
         else:
             return False
@@ -62,7 +62,7 @@ class Case():
         Renvoie True si la valeur est bonne
         False sinon.
         '''
-        if self.valeur() < 0 or self.valeur() > 5:
+        if self.valeur < 0 or self.valeur > 5:
             return False
         else:
             return True
