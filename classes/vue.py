@@ -3,8 +3,7 @@ import json
 from PyQt6.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit, QMessageBox
 from PyQt6.QtGui import QAction, QFont, QIntValidator
 from PyQt6.QtCore import Qt
-
-TAILLE_CASE = 60
+from themes import THEME_CLAIR, THEME_SOMBRE
 
 #----- grille du jeu -----#
 
@@ -102,7 +101,7 @@ class GrilleWidget(QWidget):
     # -------------------------------------------------------- #
 
     def get_entries(self) -> dict:
-        # Renvoie le dictionnaire des cases modifiable#
+        # Renvoie le dictionnaire des cases éditables
         return self.__entries
 
 
@@ -157,7 +156,27 @@ class Vue(QMainWindow):
         self.__action_nouvelle = QAction("Nouvelle partie", self)
         menu_jeu.addAction(self.__action_nouvelle)
 
+        # menu apparence#
+        menu_apparence = menubar.addMenu("Apparence")
+
+        action_clair = QAction("Thème clair", self)
+        # applique le thème clair sur toute la fenêtre#
+        action_clair.triggered.connect(lambda: self.__appliquer_theme(THEME_CLAIR))
+        menu_apparence.addAction(action_clair)
+
+        action_sombre = QAction("Thème sombre", self)
+        # applique le thème sombre sur toute la fenêtre#
+        action_sombre.triggered.connect(lambda: self.__appliquer_theme(THEME_SOMBRE))
+        menu_apparence.addAction(action_sombre)
+
     #--------------- action fichier ----------------- #
+
+    def __appliquer_theme(self, theme: str):
+        '''
+        Applique un thème QSS sur toute la fenêtre.
+        '''
+        # setStyleSheet applique le style sur la fenêtre et tous ses enfants#
+        self.setStyleSheet(theme)
 
     def __charger_grille(self):
         '''
@@ -259,11 +278,3 @@ class Vue(QMainWindow):
         # renvoie la méthode sauvegarder grille pour le contrôleur#
         return self.__sauvegarder_grille
 
-
-# ----------------lancement------------------------- #
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    vue = Vue()
-    vue.show()
-    sys.exit(app.exec())
