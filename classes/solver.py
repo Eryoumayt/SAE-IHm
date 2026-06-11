@@ -176,7 +176,7 @@ class solver():
         return 
 
 # Verifie que la grille est valide ou pas 
-s = solver("Grille/grille1.json")
+s = solver("Grille/grille6.json")
 resultat = s.resolver()
 if resultat:
     print("Fini ! Solution trouvee")

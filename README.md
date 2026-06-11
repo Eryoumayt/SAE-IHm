@@ -1,7 +1,7 @@
 # SAE IHM
 
 Travail du groupe 5 :
-- Isaac PILE-YARD
+- Isaac PILLE-YARD
 - Youenn DEZITTER
 - Arthur LECLERC
 
