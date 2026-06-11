@@ -3,7 +3,7 @@ import json
 
 
 class solver():
-    """Le solveur c'est a resoundre la grille de jeu a partir d'une grille de base. via un algorithme de backtracking.et de 3 contraintes :
+    """Le solveur sert à resoundre la grille de jeu a partir d'une grille de base. via un algorithme de backtracking.et de 3 contraintes :
     - Les cases d'un même motif doivent contenir des valeurs différentes.
     - Les 8 voisins d'une case doivent avoir des valeurs différentes
     - Chaque motif de taille N contient une permutation de 1 à N
