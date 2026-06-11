@@ -1,9 +1,9 @@
 import sys
+import os
 import json
 from PyQt6.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit, QMessageBox
 from PyQt6.QtGui import QAction, QFont, QIntValidator
 from PyQt6.QtCore import Qt
-from themes import THEME_CLAIR, THEME_SOMBRE
 
 TAILLE_CASE = 60
 
@@ -163,22 +163,26 @@ class Vue(QMainWindow):
 
         action_clair = QAction("Thème clair", self)
         # applique le thème clair sur toute la fenêtre#
-        action_clair.triggered.connect(lambda: self.__appliquer_theme(THEME_CLAIR))
+        chemin_clair = os.path.join(os.path.dirname(__file__), "theme_clair.qss")
+        action_clair.triggered.connect(lambda: self.__appliquer_theme(chemin_clair))
         menu_apparence.addAction(action_clair)
 
         action_sombre = QAction("Thème sombre", self)
         # applique le thème sombre sur toute la fenêtre#
-        action_sombre.triggered.connect(lambda: self.__appliquer_theme(THEME_SOMBRE))
+        chemin_sombre = os.path.join(os.path.dirname(__file__), "theme_sombre.qss")
+        action_sombre.triggered.connect(lambda: self.__appliquer_theme(chemin_sombre))
         menu_apparence.addAction(action_sombre)
 
     #--------------- action fichier ----------------- #
 
-    def __appliquer_theme(self, theme: str):
+    def __appliquer_theme(self, chemin_qss: str):
         '''
-        Applique un thème QSS sur toute la fenêtre.
+        Applique un thème QSS sur toute la fenêtre à partir d'un fichier .qss.
         '''
+        with open(chemin_qss, 'r', encoding='utf-8') as f:
+            qss = f.read()
         # setStyleSheet applique le style sur la fenêtre et tous ses enfants#
-        self.setStyleSheet(theme)
+        self.setStyleSheet(qss)
 
     def __charger_grille(self):
         '''

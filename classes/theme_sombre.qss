@@ -1,0 +1,30 @@
+QMainWindow {
+    background-color: #2b2b2b;
+}
+
+QMenuBar {
+    background-color: #1e1e1e;
+    color: white;
+}
+
+QMenuBar::item:selected {
+    background-color: #3c3c3c;
+}
+
+QMenu {
+    background-color: #2b2b2b;
+    color: white;
+}
+
+QMenu::item:selected {
+    background-color: #3c3c3c;
+}
+
+QLabel {
+    color: white;
+}
+
+QLineEdit {
+    background-color: #3c3c3c;
+    color: white;
+}
