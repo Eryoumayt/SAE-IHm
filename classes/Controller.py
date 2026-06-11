@@ -1,5 +1,6 @@
 import json
-from PyQt6.QtWidgets import  QFileDialog,QMessageBox
+from PyQt6.QtWidgets import  QFileDialog,QMessageBox,QHBoxLayout, QWidget,QVBoxLayout
+from PyQt6.QtCore import Qt
 from solver import solver
 from Grille import Grille
 
@@ -33,6 +34,7 @@ class controller():
     
     def new_game(self):
         self.view.get_grille_widget().nouvelle_partie()   
+        self.view.reinitialiser_chrono()
         
         
     def on_case_click(self):
@@ -50,23 +52,24 @@ class controller():
         chemin, _ = QFileDialog.getOpenFileName(self.view, "Charger une grille", "", "JSON (*.json)")
         if not chemin:
             return
-        self.model = Grille(chemin)        
+        self.model = Grille(chemin)
         with open(chemin, 'r', encoding='utf-8') as f:
             donnees_brutes = json.load(f)
         self.view.get_grille_widget().afficher(donnees_brutes)
         self.donnees_brutes = donnees_brutes
-        
-        # Afficher la grille au centre de la fenêtre
-        from PyQt6.QtWidgets import QHBoxLayout, QWidget
+
+        # Chrono au-dessus, grille au centre
         conteneur = QWidget()
-        layout_centre = QHBoxLayout()
-        layout_centre.addStretch()
-        layout_centre.addWidget(self.view.get_grille_widget())
-        layout_centre.addStretch()
-        conteneur.setLayout(layout_centre)
+        layout_horizontal = QHBoxLayout()
+        layout_horizontal.addStretch()
+        layout_horizontal.addWidget(self.view.get_grille_widget())    # centré
+        layout_horizontal.addStretch()
+        layout_horizontal.addWidget(self.view.get_label_chrono())  
+        conteneur.setLayout(layout_horizontal)  
         self.view.setCentralWidget(conteneur)
-    
+        self.view.demarrer_chrono()
         
+            
         
     def on_save(self):
         if self.donnees_brutes is None:            
@@ -124,6 +127,7 @@ class controller():
         
         if valide:
             QMessageBox.information(self.view, "Vérification", "La grille est valide !")
+            self.view.arreter_chrono()
         else:
             QMessageBox.warning(self.view, "Vérification", "La grille n'est pas valide.")
         
@@ -143,25 +147,26 @@ class controller():
         self.worker.start()
 
     def __on_solver_fini(self, resultat, grille):
-        # Réactiver le bouton
         self.view.get_action_resoudre().setEnabled(True)
-        
         if resultat:
             self.view.get_grille_widget().afficher(grille)
-            
-            # Re-centrer la grille
-            from PyQt6.QtWidgets import QHBoxLayout, QWidget
+
             conteneur = QWidget()
-            layout_centre = QHBoxLayout()
-            layout_centre.addStretch()
-            layout_centre.addWidget(self.view.get_grille_widget())
-            layout_centre.addStretch()
-            conteneur.setLayout(layout_centre)
+            layout_vertical = QVBoxLayout()
+            layout_vertical.addWidget(self.view.get_label_chrono())
+            layout_vertical.setAlignment(self.view.get_label_chrono(), Qt.AlignmentFlag.AlignCenter)
+
+            layout_horizontal = QHBoxLayout()
+            layout_horizontal.addStretch()
+            layout_horizontal.addWidget(self.view.get_grille_widget())
+            layout_horizontal.addStretch()
+            layout_vertical.addLayout(layout_horizontal)
+
+            conteneur.setLayout(layout_vertical)
             self.view.setCentralWidget(conteneur)
-            
+            self.view.arreter_chrono()
+
             QMessageBox.information(self.view, "Résolution", "Solution trouvée !")
         else:
             QMessageBox.warning(self.view, "Résolution échouée", "Aucune solution n'a été trouvée pour cette grille.")
-        
-        
-   
+    
