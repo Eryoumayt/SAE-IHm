@@ -43,9 +43,13 @@ class GrilleWidget(QWidget):
 
         # chargement de la police Luckiest Guy pour les cases #
         chemin_police = os.path.join(os.path.dirname(__file__), "fonts", "LuckiestGuy-Regular.ttf")
-        font_id = QFontDatabase.addApplicationFont(chemin_police)
-        self.__police_case = QFont("Luckiest Guy", 18) if font_id != -1 else QFont("Arial", 18, QFont.Weight.Bold)
-        self.__police_case_gras = QFont("Luckiest Guy", 18) if font_id != -1 else QFont("Arial", 18, QFont.Weight.Bold)
+        if os.path.exists(chemin_police):
+            font_id = QFontDatabase.addApplicationFont(chemin_police)
+            self.__police_case = QFont("Luckiest Guy", 18) if font_id != -1 else QFont("Arial", 18, QFont.Weight.Bold)
+            self.__police_case_gras = QFont("Luckiest Guy", 18) if font_id != -1 else QFont("Arial", 18, QFont.Weight.Bold)
+        else:
+            self.__police_case = QFont("Arial", 18, QFont.Weight.Bold)
+            self.__police_case_gras = QFont("Arial", 18, QFont.Weight.Bold)
 
     # -------------------------------------------------------- #
 
@@ -175,13 +179,19 @@ class Vue(QMainWindow):
         # chargement des polices #
         # Luckiest Guy pour le titre NEONAURE #
         chemin_luckiest = os.path.join(os.path.dirname(__file__), "fonts", "LuckiestGuy-Regular.ttf")
-        font_id_luck = QFontDatabase.addApplicationFont(chemin_luckiest)
-        self.__police_titre = QFont("Luckiest Guy", 48) if font_id_luck != -1 else QFont("Arial", 48, QFont.Weight.Bold)
+        chemin_luckiest = os.path.join(os.path.dirname(__file__), "fonts", "LuckiestGuy-Regular.ttf")
+        if os.path.exists(chemin_luckiest):
+            font_id_luck = QFontDatabase.addApplicationFont(chemin_luckiest)
+            self.__police_titre = QFont("Luckiest Guy", 48) if font_id_luck != -1 else QFont("Arial", 48, QFont.Weight.Bold)
+        else:
+            self.__police_titre = QFont("Arial", 48, QFont.Weight.Bold)
 
-        # Technology pour le chrono #
         chemin_techno = os.path.join(os.path.dirname(__file__), "fonts", "TECHNOLOGY.otf")
-        font_id_techno = QFontDatabase.addApplicationFont(chemin_techno)
-        self.__police_chrono = QFont("TECHNOLOGY", 32) if font_id_techno != -1 else QFont("Arial", 32, QFont.Weight.Bold)
+        if os.path.exists(chemin_techno):
+            font_id_techno = QFontDatabase.addApplicationFont(chemin_techno)
+            self.__police_chrono = QFont("TECHNOLOGY", 32) if font_id_techno != -1 else QFont("Arial", 32, QFont.Weight.Bold)
+        else:
+            self.__police_chrono = QFont("Arial", 32, QFont.Weight.Bold)
 
         # titre NEONAURE! en jaune #
         self.__label_titre = QLabel("NEONAURE!")
