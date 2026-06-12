@@ -3,6 +3,7 @@ import os
 import sys
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QFontDatabase
+from PyQt6.QtCore import Qt
 from vue.menu import Menu
 from classes.vue import Vue
 from classes.Controller import controller
@@ -24,16 +25,15 @@ if __name__ == "__main__":
     with open(qss_path, "r") as f:
         app.setStyleSheet(f.read())
     menu = Menu()
-    menu.showMaximized()
+    menu.setWindowState(Qt.WindowState.WindowMaximized)
     menu.show()
     
     def lancer_jeu():
         menu.close()
         fenetre = Vue()
-        fenetre.showMaximized()
         menu.ctrl = controller(None, fenetre)
+        fenetre.setWindowState(Qt.WindowState.WindowMaximized)
         fenetre.show()
-    
-    
+        
     menu.get_start().clicked.connect(lancer_jeu)
     sys.exit(app.exec())
