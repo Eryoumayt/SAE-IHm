@@ -1,10 +1,9 @@
 import json
 from PyQt6.QtWidgets import  QFileDialog,QMessageBox,QHBoxLayout, QWidget,QVBoxLayout
-from PyQt6.QtCore import Qt,QObject
+from PyQt6.QtCore import Qt,QObject,QEvent
+from PyQt6.QtGui import QShortcut, QKeySequence
 from .solver import solver
 from .Grille import Grille
-
-
 from PyQt6.QtCore import QThread, pyqtSignal
 
 class SolverWorker(QThread):
@@ -59,7 +58,8 @@ class controller(QObject):
         self.view.get_action_sauvegarder().triggered.connect(self.on_save)
         self.view.get_action_resoudre().triggered.connect(self.on_solver)
         self.view.get_action_nouvelle().triggered.connect(self.new_game)
-        self.view.get_action_verifier_voisinage().triggered.connect(self.on_verifier_voisinage)        
+        # self.view.get_action_verifier_voisinage().triggered.connect(self.on_verifier_voisinage)   
+        QShortcut(QKeySequence(Qt.Key.Key_Delete), self.view).activated.connect(self.on_delete)     
     
     def __charger_grille(self, chemin):
         """Charge une grille depuis un fichier JSON et met à jour la vue.
@@ -284,14 +284,6 @@ class controller(QObject):
         
         
     def eventFilter(self, obj, event):
-        """Détecte quand une case reçoit le focus (clic) et la sélectionne.
-        Args:
-            obj (QObject): L'objet qui a reçu l'événement.
-            event (QEvent): L'événement qui a été déclenché.
-        Returns: bool: True si l'événement a été traité, False sinon.
-        Attributes: case_selectionnee (tuple): Les coordonnées (row, col) de la case actuellement sélectionnée.
-        """
-        from PyQt6.QtCore import QEvent
         if event.type() == QEvent.Type.FocusIn:
             entries = self.view.get_grille_widget().get_entries()
             for (row, col), entry in entries.items():
@@ -299,8 +291,29 @@ class controller(QObject):
                     self.case_selectionnee = (row, col)
                     self.view.get_grille_widget().surligner_selection(row, col)
                     break
-        return False
 
+        elif event.type() == QEvent.Type.KeyPress:
+            entries = self.view.get_grille_widget().get_entries()
+            if event.key() == Qt.Key.Key_Delete:
+                self.on_delete()
+                return True
+            # Flèches directionnelles#
+            if self.case_selectionnee is not None:
+                row, col = self.case_selectionnee
+                if event.key() == Qt.Key.Key_Up and (row - 1, col) in entries:
+                    entries[(row - 1, col)].setFocus()
+                    return True
+                elif event.key() == Qt.Key.Key_Down and (row + 1, col) in entries:
+                    entries[(row + 1, col)].setFocus()
+                    return True
+                elif event.key() == Qt.Key.Key_Left and (row, col - 1) in entries:
+                    entries[(row, col - 1)].setFocus()
+                    return True
+                elif event.key() == Qt.Key.Key_Right and (row, col + 1) in entries:
+                    entries[(row, col + 1)].setFocus()
+                    return True
+
+        return False
 
     def on_value_enter(self, row, col):
         """Gère la saisie d'une valeur dans une case et valide en temps réel.
