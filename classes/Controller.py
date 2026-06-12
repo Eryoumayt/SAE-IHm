@@ -53,6 +53,7 @@ class controller(QObject):
         self.view = view
         self.case_selectionnee = None
         self.donnees_brutes = None
+        self.chemin_grille = None
         self.view.get_action_charger().triggered.connect(self.on_open)
         self.view.get_action_verifier().triggered.connect(self.on_check)
         self.view.get_action_sauvegarder().triggered.connect(self.on_save)
@@ -60,53 +61,44 @@ class controller(QObject):
         self.view.get_action_nouvelle().triggered.connect(self.new_game)
         self.view.get_action_verifier_voisinage().triggered.connect(self.on_verifier_voisinage)        
     
-    def new_game(self):
-        """ Réinitialise la grille et le chrono pour commencer une nouvelle partie.
-         
-         Args: None 
-        Returns: None
-        Attributs: None
-            
-        """
-        self.view.get_grille_widget().nouvelle_partie()   
-        self.view.reinitialiser_chrono()
-        self.view.demarrer_chrono()
-
-        
-   
-    def on_open(self):
-        """ Ouvre une boîte de dialogue pour sélectionner un fichier JSON contenant une grille, charge les données dans le modèle et met à jour la vue pour afficher la grille.
-        
-        args: None
-        Returns: None
-        Attributs: None
-        """
-        chemin, _ = QFileDialog.getOpenFileName(self.view, "Charger une grille", "", "JSON (*.json)")
-        if not chemin:
-            return
+    def __charger_grille(self, chemin):
+        """Charge une grille depuis un fichier JSON et met à jour la vue."""
         self.model = Grille(chemin)
         with open(chemin, 'r', encoding='utf-8') as f:
-            donnees_brutes = json.load(f)
-        self.view.get_grille_widget().afficher(donnees_brutes)
-        self.donnees_brutes = donnees_brutes
+            self.donnees_brutes = json.load(f)
+        self.chemin_grille = chemin
 
-        # Chrono au-dessus, grille au centre
+        self.view.get_grille_widget().afficher(self.donnees_brutes)
+
         conteneur = QWidget()
         layout_horizontal = QHBoxLayout()
         layout_horizontal.addStretch()
-        layout_horizontal.addWidget(self.view.get_grille_widget())    # centré
+        layout_horizontal.addWidget(self.view.get_grille_widget())
         layout_horizontal.addStretch()
-        layout_horizontal.addWidget(self.view.get_label_chrono())  
-        conteneur.setLayout(layout_horizontal)  
+        layout_horizontal.addWidget(self.view.get_label_chrono())
+        conteneur.setLayout(layout_horizontal)
         self.view.setCentralWidget(conteneur)
-        # Connecter les signaux des cases éditables#
+
         entries = self.view.get_grille_widget().get_entries()
         for (row, col), entry in entries.items():
             entry.installEventFilter(self)
             entry.textChanged.connect(lambda texte, r=row, c=col: self.on_value_enter(r, c))
+
+        self.view.reinitialiser_chrono()
         self.view.demarrer_chrono()
-        
-            
+        self.view.get_action_resoudre().setEnabled(True)
+
+    def on_open(self):
+        """Ouvre une boîte de dialogue pour sélectionner un fichier JSON contenant une grille."""
+        chemin, _ = QFileDialog.getOpenFileName(self.view, "Charger une grille", "", "JSON (*.json)")
+        if not chemin:
+            return
+        self.__charger_grille(chemin)
+
+    def new_game(self):
+        """Réinitialise la grille et le chrono pour commencer une nouvelle partie."""
+        if self.chemin_grille is not None:
+            self.__charger_grille(self.chemin_grille)
         
     def on_save(self):
         """ Ouvre une boîte de dialogue pour sélectionner un emplacement et un nom de fichier, puis sauvegarde la grille actuelle dans un fichier JSON.
@@ -229,6 +221,8 @@ class controller(QObject):
             QMessageBox.information(self.view, "Résolution", "Solution trouvée !")
         else:
             QMessageBox.warning(self.view, "Résolution échouée", "Aucune solution n'a été trouvée pour cette grille.")
+        self.worker.quit()
+        self.worker.wait()
         
     def on_verifier_voisinage(self):
         """Détecte les conflits de voisinage et surligne les cases en rouge.
@@ -298,12 +292,19 @@ class controller(QObject):
             row (int): Ligne de la case modifiée.
             col (int): Colonne de la case modifiée.
         """
-        # Lancer la vérification de voisinage automatiquement#
-        self.on_verifier_voisinage()
+        
+
 
         # Auto-avance : passer à la prochaine case vide#
         entries = self.view.get_grille_widget().get_entries()
         entry = entries.get((row, col))
+        texte = entry.text()
+        if not texte:  # case vide, ne rien faire#
+            return
+        if texte.isdigit() and (int(texte) > 5 or int(texte) == 0):
+            entry.clear()
+            return
+        
         if entry is not None and entry.text().isdigit() and int(entry.text()) != 0:
             # Chercher la prochaine case vide après celle-ci#
             positions = sorted(entries.keys())
@@ -312,13 +313,20 @@ class controller(QObject):
                 prochaine = entries[positions[i]]
                 if not prochaine.text().isdigit() or int(prochaine.text()) == 0:
                     prochaine.setFocus()
+                    # Lancer la vérification de voisinage automatiquement#
+                    self.on_verifier_voisinage()
                     return
             # Si rien après, chercher depuis le début#
             for i in range(0, idx):
                 prochaine = entries[positions[i]]
                 if not prochaine.text().isdigit() or int(prochaine.text()) == 0:
                     prochaine.setFocus()
+                    self.on_verifier_voisinage()
+
                     return
+        
+                
+        
 
     def on_delete(self):
         """Efface la valeur de la case actuellement sélectionnée."""
