@@ -97,6 +97,27 @@ class GrilleWidget(QWidget):
             entry = self.__entries.get((row, col))
             if entry is not None:
                 entry.setStyleSheet(entry.styleSheet() + "background-color: red;")
+                
+    def surligner_selection(self, row, col):
+        """Surligne la case sélectionnée en bleu clair.
+
+        Args:
+            row (int): Ligne de la case à sélectionner.
+            col (int): Colonne de la case à sélectionner.
+        """
+        # D'abord enlever l'ancienne sélection#
+        self.__deselectionner()
+        entry = self.__entries.get((row, col))
+        if entry is not None:
+            entry.setStyleSheet(entry.styleSheet() + "background-color: #ADD8E6;")
+
+    def __deselectionner(self):
+        """Remet toutes les cases en fond normal."""
+        for (row, col), entry in self.__entries.items():
+            style_actuel = entry.styleSheet()
+            nouveau_style = style_actuel.replace("background-color: #ADD8E6;", "background-color: lightgray;")
+            nouveau_style = nouveau_style.replace("background-color: red;", "background-color: lightgray;")
+            entry.setStyleSheet(nouveau_style)
 
     def __reset_style(self, entry):
         """Remet le fond d'une case à la couleur par défaut.
