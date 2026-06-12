@@ -65,22 +65,33 @@ class MenuGauche(QWidget):
         self.__temps = 0
         self.__label_chrono.setText("00:00")
 
+    def appliquer_theme(self, sombre: bool):
+        """Applique le thème sombre ou clair au menu."""
+        if sombre:
+            self.setStyleSheet("background-color: #16213e; color: white;")
+            self.title.setStyleSheet("color: #FFFF00;")
+            self.__label_chrono.setStyleSheet("color: #FFFF00;")
+        else:
+            self.setStyleSheet("background-color: #002244; color: white;")
+            self.title.setStyleSheet("color: #FFFF00;")
+            self.__label_chrono.setStyleSheet("color: #FFFF00;")
+
 # -------------- MAIN -------------- #
 
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
     
     # Liaison au fichier de la font (chemin relatif)
-#    base_dir = os.path.dirname(os.path.abspath(__file__))
-#    font_path = os.path.join(base_dir, "vue\qss", "LuckiestGuy-Regular.ttf")
-#    QFontDatabase.addApplicationFont(font_path)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    font_path = os.path.join(base_dir, "vue\qss", "LuckiestGuy-Regular.ttf")
+    QFontDatabase.addApplicationFont(font_path)
 
     # Liaison au fichier qss pour le style du menu à droite (chemin relatif)
-#    qss_path = os.path.join(base_dir, "qss", "right_menu.qss")
-#    with open(qss_path, "r") as f:
-#        app.setStyleSheet(f.read())
+    qss_path = os.path.join(base_dir, "qss", "right_menu.qss")
+    with open(qss_path, "r") as f:
+       app.setStyleSheet(f.read())
         
-#    menu_droite = MenuDroite()
-#    menu_droite.show()
+    menu_gauche = MenuGauche()
+    menu_gauche.show()
         
-#    sys.exit(app.exec())
+    sys.exit(app.exec())

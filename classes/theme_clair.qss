@@ -1,21 +1,21 @@
 QMainWindow {
-    background-color: #00A2FF;
+    background-color: #003366;
 }
 
 QMenuBar {
-    background-color: #0080CC;
+    background-color: #002244;
     color: white;
 }
 
 QMenuBar::item:selected {
-    background-color: #0066AA;
+    background-color: #004488;
 }
 
 QMenu {
-    background-color: #0080CC;
+    background-color: #002244;
     color: white;
 }
 
 QMenu::item:selected {
-    background-color: #0066AA;
+    background-color: #004488;
 }
