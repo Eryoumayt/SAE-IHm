@@ -2,7 +2,7 @@ import sys
 import os
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton
-from PyQt6.QtGui import QFontDatabase
+from PyQt6.QtGui import QFontDatabase, QFont
 
 class MenuGauche(QWidget):
     def __init__(self):
@@ -11,6 +11,7 @@ class MenuGauche(QWidget):
         
         # Widgets#
         self.title: QLabel = QLabel("Menu")
+        self.title.setStyleSheet('font-family: "Luckiest Guy"; font-size: 30px; color: #FFFF00;')
         
         self.verify: QPushButton = QPushButton("Vérifier")
         self.solve: QPushButton = QPushButton("Résoudre")
@@ -24,6 +25,7 @@ class MenuGauche(QWidget):
         self.__chrono = QTimer(self)
         self.__chrono.timeout.connect(self.__incrementer)
         self.__label_chrono = QLabel("00:00")
+        self.__label_chrono.setStyleSheet('font-family: "TECHNOLOGY"; font-size: 32px; color: #FFFF00;')
        
         # Layout#
         self.vboxLayout: QVBoxLayout = QVBoxLayout()
@@ -66,12 +68,12 @@ class MenuGauche(QWidget):
         """Applique le thème sombre ou clair au menu."""
         if sombre:
             self.setStyleSheet("background-color: #16213e; color: white;")
-            self.title.setStyleSheet("color: #FFFF00;")
-            self.__label_chrono.setStyleSheet("color: #FFFF00;")
+            self.title.setStyleSheet('font-family: "Luckiest Guy"; font-size: 30px; color: #FFFF00;')
+            self.__label_chrono.setStyleSheet('font-family: "TECHNOLOGY"; font-size: 32px; color: #FFFF00;')
         else:
             self.setStyleSheet("background-color: #002244; color: white;")
-            self.title.setStyleSheet("color: #FFFF00;")
-            self.__label_chrono.setStyleSheet("color: #FFFF00;")
+            self.title.setStyleSheet('font-family: "Luckiest Guy"; font-size: 30px; color: #FFFF00;')
+            self.__label_chrono.setStyleSheet('font-family: "TECHNOLOGY"; font-size: 32px; color: #FFFF00;')
 
     # -------------- Getters -------------- #
     def get_btn_verify(self):
