@@ -11,6 +11,8 @@ class SolverWorker(QThread):
     """ 
     Pour executer le solveur separement de l'interface graphique, on utilise un QThread.
     Cela permet de ne pas bloquer l'interface pendant que le solveur travaille.
+    Args: chemin (str): Le chemin vers le fichier JSON de la grille à résoudre.
+    Attributes: chemin (str): Le chemin vers le fichier JSON de la grille à résoudre.
     """
     termine = pyqtSignal(bool, object)
     
@@ -30,8 +32,7 @@ class controller(QObject):
     Args: 
     model (Grille): L'instance du modèle représentant la grille de jeu.
     view (Vue): L'instance de la vue représentant l'interface utilisateur.
-    Returns: None
-    Atributs: 
+    Attributes: 
     model (Grille): L'instance du modèle représentant la grille de jeu.
     view (Vue): L'instance de la vue représentant l'interface utilisateur.
     """
@@ -42,8 +43,7 @@ class controller(QObject):
             model (Grille): L'instance du modèle représentant la grille de jeu.
             view (Vue): L'instance de la vue représentant l'interface utilisateur.
             
-        Returns: None
-        Atributs: 
+        Attributes: 
             model (Grille): L'instance du modèle représentant la grille de jeu.
             view (Vue): L'instance de la vue représentant l'interface utilisateur.
         """
@@ -62,7 +62,14 @@ class controller(QObject):
         self.view.get_action_verifier_voisinage().triggered.connect(self.on_verifier_voisinage)        
     
     def __charger_grille(self, chemin):
-        """Charge une grille depuis un fichier JSON et met à jour la vue."""
+        """Charge une grille depuis un fichier JSON et met à jour la vue.
+        Args:
+            chemin (str): Le chemin vers le fichier JSON contenant la grille à charger.
+        Attributes: 
+            model (Grille): L'instance du modèle représentant la grille de jeu, mise à jour avec la nouvelle grille chargée.            
+            donnees_brutes (dict): Les données brutes de la grille chargée, utilisées pour afficher la grille dans la vue.
+            chemin_grille (str): Le chemin vers le fichier JSON de la grille actuellement chargée, utilisé pour les opérations de sauvegarde et de nouvelle partie.
+        """
         self.model = Grille(chemin)
         with open(chemin, 'r', encoding='utf-8') as f:
             self.donnees_brutes = json.load(f)
@@ -89,55 +96,62 @@ class controller(QObject):
         self.view.get_action_resoudre().setEnabled(True)
 
     def on_open(self):
-        """Ouvre une boîte de dialogue pour sélectionner un fichier JSON contenant une grille."""
+        """Ouvre une boîte de dialogue pour sélectionner un fichier JSON contenant une grille.
+        Attributes: 
+            chemin_grille (str): Le chemin vers le fichier JSON de la grille actuellement chargée, utilisé pour les opérations de sauvegarde et de nouvelle partie.
+        """
         chemin, _ = QFileDialog.getOpenFileName(self.view, "Charger une grille", "", "JSON (*.json)")
         if not chemin:
             return
         self.__charger_grille(chemin)
 
     def new_game(self):
-        """Réinitialise la grille et le chrono pour commencer une nouvelle partie."""
+        """Réinitialise la grille et le chrono pour commencer une nouvelle partie.
+
+        Attributes:
+            chemin_grille (str): Le chemin vers le fichier JSON de la grille actuellement chargée
+        """
         if self.chemin_grille is not None:
             self.__charger_grille(self.chemin_grille)
         
     def on_save(self):
-        """ Ouvre une boîte de dialogue pour sélectionner un emplacement et un nom de fichier, puis sauvegarde la grille actuelle dans un fichier JSON.
-        args: None
-        Returns: None
-        Attributs: None
+        """Ouvre une boîte de dialogue pour sauvegarder la grille actuelle dans un fichier JSON.
+        Les cases éditables sont sauvegardées avec leur valeur initiale (0) et la valeur du joueur,
+        pour que les cases restent éditables au rechargement tout en conservant la progression.
         """
-        if self.donnees_brutes is None:            
+        if self.donnees_brutes is None:
             QMessageBox.warning(self.view, "Attention", "Aucune grille chargée.")
             return
-        
-        entries = self.view.get_grille_widget().get_entries()        
+
+        entries = self.view.get_grille_widget().get_entries()
         grille_sauvegarde = {}
 
-        for nom_motif, cases in self.donnees_brutes.items():            
+        for nom_motif, cases in self.donnees_brutes.items():
             nouvelle_liste = []
             for case in cases:
-                row, col, valeur_init = case
+                row = case[0]
+                col = case[1]
+                valeur_init = case[2]                
                 entry = entries.get((row, col))
                 if entry is not None:
+                    # Case éditable : valeur_init=0, valeur_joueur=ce qui est tapé#
                     texte = entry.text()
-                    # convertit le texte en int, 0 si la case est vide#
-                    val = int(texte) if texte.isdigit() else 0
+                    valeur_joueur = int(texte) if texte.isdigit() else 0
+                    nouvelle_liste.append([row, col, 0, valeur_joueur])
                 else:
-                    val = valeur_init
-                nouvelle_liste.append([row, col, val])
+                    # Case fixe : valeur_init=la valeur, valeur_joueur=0#
+                    nouvelle_liste.append([row, col, valeur_init, 0])
             grille_sauvegarde[nom_motif] = nouvelle_liste
 
-        chemin, _ = QFileDialog.getSaveFileName(self.view, "Sauvegarder la grille","","Fichiers JSON (*.json)")
+        chemin, _ = QFileDialog.getSaveFileName(self.view, "Sauvegarder la grille", "", "Fichiers JSON (*.json)")
         if chemin:
             with open(chemin, 'w', encoding='utf-8') as f:
                 json.dump(grille_sauvegarde, f, indent=4)
             QMessageBox.information(self.view, "Succès", "Grille sauvegardée.")
-    
+        
     def on_check(self):
         """ Vérifie si la grille actuelle est valide en comparant les valeurs saisies par l'utilisateur avec les règles du jeu, et affiche un message indiquant si la grille est valide ou non.
-        args: None
-        Returns: None
-        Attributs: None"""
+  """
         if self.donnees_brutes is None:
             return
         
@@ -171,10 +185,7 @@ class controller(QObject):
         
     def on_solver(self):
         """ Lance le solveur pour trouver une solution à la grille actuelle, et met à jour la vue pour afficher la solution trouvée. Si aucune solution n'est trouvée, affiche un message d'erreur.
-        args: None
-        Returns: None
-        Attributs: None
-        """
+          """
         if self.donnees_brutes is None:
             return
         
@@ -191,18 +202,20 @@ class controller(QObject):
 
     def __on_solver_fini(self, resultat, grille):
         """ Callback appelé lorsque le solveur a terminé. Met à jour la vue avec la solution trouvée, ou affiche un message d'erreur si aucune solution n'a été trouvée. Réactive le bouton de résolution.
-        
             Args:
                 resultat (bool): Indique si une solution a été trouvée ou non.
                 grille (dict): La grille solution trouvée par le solveur, ou None si aucune solution n'a été trouvée.
-                
-            Returns: None
-            Attributs: None
+
         """
         self.view.get_action_resoudre().setEnabled(True)
+
         if resultat:
             self.view.get_grille_widget().afficher(grille)
-
+            # Reconnecter les signaux des entries#
+            entries = self.view.get_grille_widget().get_entries()
+            for (row, col), entry in entries.items():
+                entry.installEventFilter(self)
+                entry.textChanged.connect(lambda texte, r=row, c=col: self.on_value_enter(r, c))
             conteneur = QWidget()
             layout_vertical = QVBoxLayout()
             layout_vertical.addWidget(self.view.get_label_chrono())
@@ -226,10 +239,10 @@ class controller(QObject):
         
     def on_verifier_voisinage(self):
         """Détecte les conflits de voisinage et surligne les cases en rouge.
-
         Parcourt toutes les cases remplies (éditables et non éditables) et 
         vérifie si un des 8 voisins contient la même valeur. Si oui, les 
         cases éditables en conflit sont surlignées en rouge.
+  
         """
         if self.donnees_brutes is None:
             return
@@ -240,7 +253,9 @@ class controller(QObject):
         toutes_valeurs = {}
         for nom_motif, cases in self.donnees_brutes.items():
             for case in cases:
-                row, col, valeur_init = case
+                row = case[0]
+                col = case[1]
+                valeur_init = case[2]
                 entry = entries.get((row, col))
                 if entry is not None:
                     texte = entry.text()
@@ -269,7 +284,13 @@ class controller(QObject):
         
         
     def eventFilter(self, obj, event):
-        """Détecte quand une case reçoit le focus (clic) et la sélectionne."""
+        """Détecte quand une case reçoit le focus (clic) et la sélectionne.
+        Args:
+            obj (QObject): L'objet qui a reçu l'événement.
+            event (QEvent): L'événement qui a été déclenché.
+        Returns: bool: True si l'événement a été traité, False sinon.
+        Attributes: case_selectionnee (tuple): Les coordonnées (row, col) de la case actuellement sélectionnée.
+        """
         from PyQt6.QtCore import QEvent
         if event.type() == QEvent.Type.FocusIn:
             entries = self.view.get_grille_widget().get_entries()
@@ -280,10 +301,6 @@ class controller(QObject):
                     break
         return False
 
-    def on_case_click(self):
-        """Gère la sélection d'une case lors du clic."""
-        # La logique est dans eventFilter, cette méthode est conservée pour extension future#
-        pass
 
     def on_value_enter(self, row, col):
         """Gère la saisie d'une valeur dans une case et valide en temps réel.
@@ -291,9 +308,8 @@ class controller(QObject):
         Args:
             row (int): Ligne de la case modifiée.
             col (int): Colonne de la case modifiée.
-        """
-        
 
+        """
 
         # Auto-avance : passer à la prochaine case vide#
         entries = self.view.get_grille_widget().get_entries()
@@ -324,12 +340,18 @@ class controller(QObject):
                     self.on_verifier_voisinage()
 
                     return
+        self.on_verifier_voisinage()
+
         
                 
         
 
     def on_delete(self):
-        """Efface la valeur de la case actuellement sélectionnée."""
+        """Efface la valeur de la case actuellement sélectionnée.
+         Si une case est sélectionnée, son contenu est effacé et le focus est maintenu sur cette case.
+
+        Attributes: case_selectionnee (tuple): Les coordonnées (row, col) de la case actuellement sélectionnée.
+        """
         if self.case_selectionnee is not None:
             entries = self.view.get_grille_widget().get_entries()
             entry = entries.get(self.case_selectionnee)

@@ -24,11 +24,13 @@ if __name__ == "__main__":
     with open(qss_path, "r") as f:
         app.setStyleSheet(f.read())
     menu = Menu()
+    menu.showMaximized()
     menu.show()
     
     def lancer_jeu():
         menu.close()
         fenetre = Vue()
+        fenetre.showMaximized()
         menu.ctrl = controller(None, fenetre)
         fenetre.show()
     

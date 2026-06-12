@@ -37,7 +37,7 @@ class GrilleWidget(QWidget):
 
         # calcule les bordures entre motifs différents#
         carte_motifs = {}
-        for idx, cases in enumerate(grille_data.values()): #donne un index a chaque motif et associe les cases a cet index#
+        for idx, cases in enumerate(grille_data.values()):
             for case in cases:
                 carte_motifs[(case[0], case[1])] = idx
 
@@ -46,11 +46,11 @@ class GrilleWidget(QWidget):
             for case in cases:
                 row = case[0]
                 col = case[1]
-                valeur = case[2]
+                valeur_init = case[2]
+                # Si 4 éléments, on récupère la valeur du joueur, sinon 0#
+                valeur_joueur = case[3] if len(case) == 4 else 0
 
                 # bordure épaisse si le voisin appartient à un motif différent#
-                # Si l'index du motif n'existe pas:  retourne -1#
-                #est-ce que cet index est différent du motif actuel ? Si oui : bordure épaisse ; Si non : bordure fine #
                 top    = "3px solid black" if carte_motifs.get((row-1, col), -1) != idx else "1px solid gray"
                 bottom = "3px solid black" if carte_motifs.get((row+1, col), -1) != idx else "1px solid gray"
                 left   = "3px solid black" if carte_motifs.get((row, col-1), -1) != idx else "1px solid gray"
@@ -62,16 +62,16 @@ class GrilleWidget(QWidget):
                     f"border-left: {left}; border-right: {right};"
                 )
 
-                if valeur != 0:
+                if valeur_init != 0:
                     # case avec valeur initiale : lecture seule#
-                    label = QLabel(str(valeur))
+                    label = QLabel(str(valeur_init))
                     label.setFixedSize(TAILLE_CASE, TAILLE_CASE)
                     label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                     label.setFont(QFont("Arial", 16, QFont.Weight.Bold))
                     label.setStyleSheet(style)
                     self.__layout.addWidget(label, row, col)
                 else:
-                    # case vide#
+                    # case vide ou avec valeur du joueur : éditable#
                     entry = QLineEdit()
                     entry.setFixedSize(TAILLE_CASE, TAILLE_CASE)
                     entry.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -79,9 +79,12 @@ class GrilleWidget(QWidget):
                     entry.setMaxLength(1)
                     entry.setValidator(QIntValidator(1, 5))
                     entry.setStyleSheet(style)
+                    # Si le joueur avait tapé une valeur, la restaurer#
+                    if valeur_joueur != 0:
+                        entry.setText(str(valeur_joueur))
                     self.__layout.addWidget(entry, row, col)
                     self.__entries[(row, col)] = entry
-                    
+                        
     def surligner_conflits(self, conflits):
         """Surligne en rouge les cases en conflit de voisinage.
 
@@ -240,68 +243,6 @@ class Vue(QMainWindow):
         # setStyleSheet applique le style sur la fenêtre et tous ses enfants#
         self.setStyleSheet(qss)
 
-    def __charger_grille(self):
-        '''
-        ouvre un dossier pour charger un fichier JSON.
-        '''
-        chemin, _ = QFileDialog.getOpenFileName(
-            self,
-            "Charger une grille",
-            "",
-            "Fichiers JSON (*.json)"
-        )
-        if chemin:
-            with open(chemin, 'r', encoding='utf-8') as f:
-                self.__grille_data = json.load(f)
-            self.__label_accueil.hide()
-            self.__grille_widget.afficher(self.__grille_data)
-
-            # met la grille au milieu des écrans#
-            conteneur = QWidget()
-            layout_centre = QHBoxLayout()
-            # espace ajustable sur les côtés pour centrer#
-            layout_centre.addStretch()
-            layout_centre.addWidget(self.__grille_widget)
-            layout_centre.addStretch()
-            conteneur.setLayout(layout_centre)
-            self.setCentralWidget(conteneur)
-
-    def __sauvegarder_grille(self):
-        '''
-        sauvegarde l'état actuel de la grille dans un fichier JSON.
-        '''
-        if self.__grille_data is None:
-            QMessageBox.warning(self, "Attention", "Aucune grille chargée.")
-            return
-
-        entries = self.__grille_widget.get_entries()
-        grille_sauvegarde = {}
-
-        for nom_motif, cases in self.__grille_data.items():
-            nouvelle_liste = []
-            for case in cases:
-                row, col, valeur_init = case
-                entry = entries.get((row, col))
-                if entry is not None:
-                    texte = entry.text()
-                    # convertit le texte en int, 0 si la case est vide#
-                    val = int(texte) if texte.isdigit() else 0
-                else:
-                    val = valeur_init
-                nouvelle_liste.append([row, col, val])
-            grille_sauvegarde[nom_motif] = nouvelle_liste
-
-        chemin, _ = QFileDialog.getSaveFileName(
-            self,
-            "Sauvegarder la grille",
-            "",
-            "Fichiers JSON (*.json)"
-        )
-        if chemin:
-            with open(chemin, 'w', encoding='utf-8') as f:
-                json.dump(grille_sauvegarde, f, indent=4)
-            QMessageBox.information(self, "Succès", "Grille sauvegardée.")
-
 
     def __incrementer(self):
         self.__temps += 1
@@ -351,14 +292,6 @@ class Vue(QMainWindow):
     def get_action_nouvelle(self):
         # renvoie l'action nouvelle partie pour le contrôleur#
         return self.__action_nouvelle
-
-    def get_charger_grille(self):
-        # renvoie la méthode charger grille pour le contrôleur#
-        return self.__charger_grille
-
-    def get_sauvegarder_grille(self):
-        # renvoie la méthode sauvegarder grille pour le contrôleur#
-        return self.__sauvegarder_grille
 
     def get_label_chrono(self):
         return self.__label_chrono
