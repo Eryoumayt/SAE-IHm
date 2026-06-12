@@ -192,9 +192,13 @@ class Vue(QMainWindow):
 
         self.__action_charger = QAction("Charger une grille", self)
         menu_fichier.addAction(self.__action_charger)
+        self.__action_charger.setShortcut("Ctrl+O")
+
 
         self.__action_sauvegarder = QAction("Sauvegarder la grille", self)
         menu_fichier.addAction(self.__action_sauvegarder)
+        self.__action_sauvegarder.setShortcut("Ctrl+S")
+
 
         menu_fichier.addSeparator()
 
@@ -207,15 +211,18 @@ class Vue(QMainWindow):
 
         self.__action_verifier = QAction("Vérifier la solution", self)
         menu_jeu.addAction(self.__action_verifier)
+        self.__action_verifier.setShortcut("Ctrl+V")
+
 
         self.__action_resoudre = QAction("Résoudre", self)
         menu_jeu.addAction(self.__action_resoudre)
+        self.__action_resoudre.setShortcut("Ctrl+R")
+
 
         self.__action_nouvelle = QAction("Nouvelle partie", self)
         menu_jeu.addAction(self.__action_nouvelle)
-        
-        self.__action_verifier_voisinage = QAction("Vérifier voisinage", self)
-        menu_jeu.addAction(self.__action_verifier_voisinage)
+        self.__action_nouvelle.setShortcut("Ctrl+N")
+
 
         # menu apparence#
         menu_apparence = menubar.addMenu("Apparence")
@@ -265,9 +272,6 @@ class Vue(QMainWindow):
 
     #-----------getter-----------------#
 
-    def get_grille_data(self) -> dict:
-        # renvoie les données brutes de la grille chargée#
-        return self.__grille_data
 
     def get_grille_widget(self) -> GrilleWidget:
         # renvoie le composant grille#
@@ -295,8 +299,4 @@ class Vue(QMainWindow):
 
     def get_label_chrono(self):
         return self.__label_chrono
-    
-    def get_action_verifier_voisinage(self):
-        return self.__action_verifier_voisinage
-
     
