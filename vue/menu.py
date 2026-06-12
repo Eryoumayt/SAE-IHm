@@ -1,8 +1,8 @@
 import sys
 import os
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton,QMessageBox
-from PyQt6.QtGui import QFontDatabase
+from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton, QMessageBox
+from PyQt6.QtGui import QFontDatabase, QFont
 
 class Menu(QWidget):
     def __init__(self):
@@ -17,6 +17,7 @@ class Menu(QWidget):
         
         self.game_title: QLabel = QLabel("Néonaure")
         self.game_title.setObjectName("Title")
+        self.game_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         # ------------- QPushButtons (Démarrer et Paramètres) ------------- #
         
@@ -31,6 +32,7 @@ class Menu(QWidget):
         
         self.credits: QLabel = QLabel("Isaac PILLE-YARD - Youenn DEZITTER - Arthur LECLERC")
         self.credits.setObjectName("Credits")
+        self.credits.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         # ------------- Ajouts des Widgets au Layout ------------- #
         
