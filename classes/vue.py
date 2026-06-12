@@ -11,17 +11,11 @@ TAILLE_CASE = 60
 #----- grille du jeu -----#
 
 class GrilleWidget(QWidget):
-    '''
-    affiche la grille de jeu.
-    '''
+    """Affiche la grille de jeu."""
 
     def __init__(self):
         super().__init__()
-
-        # Identifiant pour le QSS
         self.setObjectName("grilleWidget")
-
-        # Bordure jaune
         self.setStyleSheet("""
             #grilleWidget {
                 border: 3px solid #FFFF00;
@@ -29,19 +23,15 @@ class GrilleWidget(QWidget):
             }
         """)
 
-        #place les cases par ligne et colonne#
         self.__layout = QGridLayout()
         self.__layout.setSpacing(0)
         self.__layout.setContentsMargins(0, 0, 0, 0)
-
-        # aligne la grille en haut à gauche pour éviter l'étirement en plein écran#
         self.__layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.setLayout(self.__layout)
-
-        #QLineEdit pour les cases éditables#
         self.__entries = {}
+        self.__fond_courant = "white"
 
-        # chargement de la police Luckiest Guy pour les cases #
+        # Chargement de la police Luckiest Guy pour les cases
         chemin_police = os.path.join(os.path.dirname(__file__), "..", "vue", "qss", "LuckiestGuy-Regular.ttf")
         if os.path.exists(chemin_police):
             font_id = QFontDatabase.addApplicationFont(chemin_police)
@@ -54,26 +44,42 @@ class GrilleWidget(QWidget):
     # -------------------------------------------------------- #
 
     def afficher(self, grille_data: dict, sombre: bool = False):
+        """Affiche la grille à partir des données JSON.
+        
+        Args:
+            grille_data (dict): Les données de la grille.
+            sombre (bool): Si True, utilise le thème sombre pour les cases.
+        """
         self.__vider()
         self.__entries = {}
 
-        # la grille est toujours blanche avec bordures noires et texte noir #
-        fond = "white"
-        bordure_fine = "1px solid black"
-        bordure_epaisse = "3px solid black"
+        if sombre:
+            fond = "#2d2d2d"
+            couleur_texte = "white"
+            bordure_fine = "1px solid #555"
+            bordure_epaisse = "3px solid #888"
+        else:
+            fond = "white"
+            couleur_texte = "black"
+            bordure_fine = "1px solid black"
+            bordure_epaisse = "3px solid black"
 
-        # calcule les bordures entre motifs différents#
+        self.__fond_courant = fond
+
+        # Calcule les bordures entre motifs différents
         carte_motifs = {}
         for idx, cases in enumerate(grille_data.values()):
             for case in cases:
                 carte_motifs[(case[0], case[1])] = idx
 
-        # parcourt chaque motif et crée un widget pour chaque case#
+        # Parcourt chaque motif et crée un widget pour chaque case
         for idx, cases in enumerate(grille_data.values()):
             for case in cases:
                 row = case[0]
                 col = case[1]
-                valeur = case[2]
+                valeur_init = case[2]
+                # Si 4 éléments, on récupère la valeur du joueur, sinon 0
+                valeur_joueur = case[3] if len(case) == 4 else 0
 
                 top    = bordure_epaisse if carte_motifs.get((row-1, col), -1) != idx else bordure_fine
                 bottom = bordure_epaisse if carte_motifs.get((row+1, col), -1) != idx else bordure_fine
@@ -82,19 +88,21 @@ class GrilleWidget(QWidget):
 
                 style = (
                     f"background-color: {fond};"
-                    f"color: black;"
+                    f"color: {couleur_texte};"
                     f"border-top: {top}; border-bottom: {bottom};"
                     f"border-left: {left}; border-right: {right};"
                 )
 
-                if valeur != 0:
-                    label = QLabel(str(valeur))
+                if valeur_init != 0:
+                    # Case avec valeur initiale : lecture seule
+                    label = QLabel(str(valeur_init))
                     label.setFixedSize(TAILLE_CASE, TAILLE_CASE)
                     label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                     label.setFont(self.__police_case_gras)
                     label.setStyleSheet(style)
                     self.__layout.addWidget(label, row, col)
                 else:
+                    # Case vide ou avec valeur du joueur : éditable
                     entry = QLineEdit()
                     entry.setFixedSize(TAILLE_CASE, TAILLE_CASE)
                     entry.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -102,52 +110,96 @@ class GrilleWidget(QWidget):
                     entry.setMaxLength(1)
                     entry.setValidator(QIntValidator(1, 5))
                     entry.setStyleSheet(style)
+                    # Si le joueur avait tapé une valeur, la restaurer
+                    if valeur_joueur != 0:
+                        entry.setText(str(valeur_joueur))
                     self.__layout.addWidget(entry, row, col)
                     self.__entries[(row, col)] = entry
 
     # -------------------------------------------------------- #
 
-    def surligner_selection(self, row: int, col: int):
-        for (r, c), entry in self.__entries.items():
-            if r == row and c == col:
-                entry.setStyleSheet(entry.styleSheet() + "background-color: #cce5ff;")
-
-    # -------------------------------------------------------- #
-
     def surligner_conflits(self, conflits: set):
+        """Surligne en rouge les cases en conflit de voisinage.
+
+        Args:
+            conflits (set): Ensemble de tuples (row, col) des cases en conflit.
+        """
+        # D'abord remettre toutes les cases en style normal
+        for (row, col), entry in self.__entries.items():
+            self.__reset_style(entry)
+        # Couleur de conflit adaptée au thème
+        couleur_conflit = "#8b3a3a" if self.__fond_courant != "white" else "#ff9999"
+        # Puis mettre en rouge les cases en conflit
         for (row, col) in conflits:
             entry = self.__entries.get((row, col))
             if entry is not None:
-                entry.setStyleSheet(entry.styleSheet() + "background-color: #ff9999;")
+                entry.setStyleSheet(entry.styleSheet() + f"background-color: {couleur_conflit};")
+
+    def surligner_selection(self, row: int, col: int):
+        """Surligne la case sélectionnée en bleu clair.
+
+        Args:
+            row (int): Ligne de la case à sélectionner.
+            col (int): Colonne de la case à sélectionner.
+        """
+        self.__deselectionner()
+        entry = self.__entries.get((row, col))
+        if entry is not None:
+            couleur_sel = "#3a5f8a" if self.__fond_courant != "white" else "#cce5ff"
+            entry.setStyleSheet(entry.styleSheet() + f"background-color: {couleur_sel};")
+
+    def __deselectionner(self):
+        """Remet toutes les cases en fond normal."""
+        for (row, col), entry in self.__entries.items():
+            style_actuel = entry.styleSheet()
+            nouveau_style = style_actuel
+            for couleur in ["#cce5ff", "#3a5f8a", "#ff9999", "#8b3a3a"]:
+                nouveau_style = nouveau_style.replace(f"background-color: {couleur};", f"background-color: {self.__fond_courant};")
+            entry.setStyleSheet(nouveau_style)
+
+    def __reset_style(self, entry):
+        """Remet le fond d'une case à la couleur par défaut.
+
+        Args:
+            entry (QLineEdit): La case à réinitialiser.
+        """
+        style_actuel = entry.styleSheet()
+        nouveau_style = style_actuel
+        for couleur in ["#ff9999", "#8b3a3a"]:
+            nouveau_style = nouveau_style.replace(f"background-color: {couleur};", f"background-color: {self.__fond_courant};")
+        entry.setStyleSheet(nouveau_style)
 
     # -------------------------------------------------------- #
 
     def __vider(self):
+        """Supprime tous les widgets de la grille."""
         while self.__layout.count():
             item = self.__layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
 
     def nouvelle_partie(self):
+        """Remet à zéro toutes les cases saisies par le joueur."""
         for entry in self.__entries.values():
             entry.clear()
 
     # -------------------------------------------------------- #
 
     def get_entries(self) -> dict:
+        """Renvoie le dictionnaire des cases éditables."""
         return self.__entries
 
 
-# ------- vue principal-------- #
+# ------- vue principale -------- #
 
 class Vue(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Neonaure")
+        self.setWindowTitle("Néonaure")
 
-        # données brutes de la grille chargée#
+        # Données brutes de la grille chargée
         self.__grille_data = None
-        # thème sombre activé ou non#
+        # Thème sombre activé ou non
         self.__theme_sombre = False
 
         # Appliquer le thème clair au démarrage
@@ -156,7 +208,7 @@ class Vue(QMainWindow):
             with open(chemin_clair, 'r', encoding='utf-8') as f:
                 self.setStyleSheet(f.read())
 
-        # chargement de la police Luckiest Guy pour le titre NEONAURE #
+        # Chargement de la police Luckiest Guy pour le titre NEONAURE
         chemin_luckiest = os.path.join(os.path.dirname(__file__), "..", "vue", "qss", "LuckiestGuy-Regular.ttf")
         if os.path.exists(chemin_luckiest):
             font_id_luck = QFontDatabase.addApplicationFont(chemin_luckiest)
@@ -164,7 +216,7 @@ class Vue(QMainWindow):
         else:
             self.__police_titre = QFont("Arial", 48, QFont.Weight.Bold)
 
-        # chargement de la police TECHNOLOGY pour le chrono #
+        # Chargement de la police TECHNOLOGY pour le chrono
         chemin_techno = os.path.join(os.path.dirname(__file__), "..", "vue", "qss", "Technology.ttf")
         if os.path.exists(chemin_techno):
             font_id_techno = QFontDatabase.addApplicationFont(chemin_techno)
@@ -172,13 +224,13 @@ class Vue(QMainWindow):
         else:
             self.__police_chrono = QFont("Arial", 32, QFont.Weight.Bold)
 
-        # ---- TITRE NEONAURE! en gros jaune Luckiest Guy ---- #
+        # Titre NEONAURE!
         self.__label_titre = QLabel("NEONAURE!")
         self.__label_titre.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.__label_titre.setFont(self.__police_titre)
         self.__label_titre.setStyleSheet("color: #FFFF00; background-color: transparent;")
 
-        # ---- CHRONO en TECHNOLOGY jaune ---- #
+        # Chrono
         self.__temps = 0
         self.__chrono = QTimer(self)
         self.__chrono.timeout.connect(self.__incrementer)
@@ -188,68 +240,104 @@ class Vue(QMainWindow):
         self.__label_chrono.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.__label_chrono.setStyleSheet("color: #FFFF00; background-color: transparent;")
 
-        # menu lateral gauche#
+        # Menu latéral gauche
         self.__menu_gauche = MenuGauche()
 
-        # label d'accueil affiché au démarrage#
-        self.__label_accueil = QLabel("Bienvenue dans Neonaure !\nChargez une grille via le menu Fichier.")
+        # Label d'accueil affiché au démarrage
+        self.__label_accueil = QLabel("Bienvenue dans Néonaure !\nCliquez sur Nouvelle Partie pour commencer.")
         self.__label_accueil.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.__label_accueil.setFont(self.__police_titre)
         self.__label_accueil.setStyleSheet("color: #FFFF00; background-color: transparent; font-size: 36px;")
-        self.setCentralWidget(self.__label_accueil)
 
-        # composant grille, pas encore affiché#
+        # Composant grille, pas encore affiché
         self.__grille_widget = GrilleWidget()
+
+        # ===== Layout PERMANENT (construit une seule fois) =====
+        self.__conteneur = QWidget()
+        self.__layout_principal = QHBoxLayout()
+
+        # Gauche : menu latéral
+        self.__layout_principal.addWidget(self.__menu_gauche, alignment=Qt.AlignmentFlag.AlignTop)
+
+        # Espace
+        self.__layout_principal.addStretch()
+
+        # Centre : titre + (accueil OU grille)
+        self.__layout_centre = QVBoxLayout()
+        self.__layout_centre.addWidget(self.__label_titre, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.__layout_centre.addWidget(self.__label_accueil, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.__layout_centre.addWidget(self.__grille_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.__layout_centre.addStretch()
+        self.__layout_principal.addLayout(self.__layout_centre)
+
+        # Espace
+        self.__layout_principal.addStretch()
+
+        # Droite : chrono
+        self.__layout_principal.addWidget(self.__label_chrono, alignment=Qt.AlignmentFlag.AlignTop)
+
+        self.__conteneur.setLayout(self.__layout_principal)
+        self.setCentralWidget(self.__conteneur)
+
+        # État initial : afficher l'accueil, cacher le jeu
+        self.__label_accueil.show()
+        self.__grille_widget.hide()
+        self.__label_titre.hide()
+        self.__label_chrono.hide()
+
         self.__creer_menu()
 
-    # ------------------- menu ------------------#
+    # ------------------- menu bar ------------------#
 
     def __creer_menu(self):
+        """Crée la barre de menu (Fichier + Apparence)."""
         menubar = self.menuBar()
 
         menu_fichier = menubar.addMenu("Fichier")
-
         self.__action_charger = QAction("Charger une grille", self)
+        self.__action_charger.setShortcut("Ctrl+O")
         menu_fichier.addAction(self.__action_charger)
 
-        self.__action_sauvegarder = QAction("Sauvegarder la grille", self)
+        self.__action_sauvegarder = QAction("Sauvegarder", self)
+        self.__action_sauvegarder.setShortcut("Ctrl+S")
         menu_fichier.addAction(self.__action_sauvegarder)
 
         menu_fichier.addSeparator()
-
         self.__action_quitter = QAction("Quitter", self)
         self.__action_quitter.triggered.connect(self.close)
         menu_fichier.addAction(self.__action_quitter)
 
-        menu_jeu = menubar.addMenu("Jeu")
-
-        self.__action_verifier = QAction("Verifier la solution", self)
-        menu_jeu.addAction(self.__action_verifier)
-
-        self.__action_verifier_voisinage = QAction("Verifier le voisinage", self)
-        menu_jeu.addAction(self.__action_verifier_voisinage)
-
-        self.__action_resoudre = QAction("Resoudre", self)
-        menu_jeu.addAction(self.__action_resoudre)
-
-        self.__action_nouvelle = QAction("Nouvelle partie", self)
-        menu_jeu.addAction(self.__action_nouvelle)
-
         menu_apparence = menubar.addMenu("Apparence")
-
-        action_clair = QAction("Theme clair", self)
+        self.__action_theme_clair = QAction("Thème clair", self)
         chemin_clair = os.path.join(os.path.dirname(__file__), "theme_clair.qss")
-        action_clair.triggered.connect(lambda: self.__appliquer_theme(chemin_clair))
-        menu_apparence.addAction(action_clair)
+        self.__action_theme_clair.triggered.connect(lambda: self.__appliquer_theme(chemin_clair))
+        menu_apparence.addAction(self.__action_theme_clair)
 
-        action_sombre = QAction("Theme sombre", self)
+        self.__action_theme_sombre = QAction("Thème sombre", self)
         chemin_sombre = os.path.join(os.path.dirname(__file__), "theme_sombre.qss")
-        action_sombre.triggered.connect(lambda: self.__appliquer_theme(chemin_sombre))
-        menu_apparence.addAction(action_sombre)
+        self.__action_theme_sombre.triggered.connect(lambda: self.__appliquer_theme(chemin_sombre))
+        menu_apparence.addAction(self.__action_theme_sombre)
 
-    #--------------- action fichier ----------------- #
+    # --------------- layout --------------- #
+
+    def afficher_accueil(self):
+        """Affiche l'écran d'accueil (sans détruire aucun widget)."""
+        self.__label_accueil.show()
+        self.__grille_widget.hide()
+        self.__label_titre.hide()
+        self.__label_chrono.hide()
+
+    def afficher_grille_centree(self):
+        """Affiche la grille au centre avec le titre et le chrono (sans détruire aucun widget)."""
+        self.__label_accueil.hide()
+        self.__grille_widget.show()
+        self.__label_titre.show()
+        self.__label_chrono.show()
+
+    # --------------- thème --------------- #
 
     def __appliquer_theme(self, chemin_qss: str):
+        """Applique un thème QSS sur toute la fenêtre."""
         with open(chemin_qss, 'r', encoding='utf-8') as f:
             qss = f.read()
         self.setStyleSheet(qss)
@@ -257,93 +345,14 @@ class Vue(QMainWindow):
         self.__theme_sombre = "sombre" in chemin_qss
         self.__menu_gauche.appliquer_theme(self.__theme_sombre)
 
-        if self.__theme_sombre:
-            self.__label_titre.setStyleSheet("color: #FFFF00; background-color: transparent;")
-            self.__label_chrono.setStyleSheet("color: #FFFF00; background-color: transparent;")
-        else:
-            self.__label_titre.setStyleSheet("color: #FFFF00; background-color: transparent;")
-            self.__label_chrono.setStyleSheet("color: #FFFF00; background-color: transparent;")
+        self.__label_titre.setStyleSheet("color: #FFFF00; background-color: transparent;")
+        self.__label_chrono.setStyleSheet("color: #FFFF00; background-color: transparent;")
 
+        # Reconstruire la grille avec les bonnes couleurs si une grille est chargée
         if self.__grille_data is not None:
             self.__grille_widget.afficher(self.__grille_data, self.__theme_sombre)
 
-    def __charger_grille(self):
-        chemin, _ = QFileDialog.getOpenFileName(
-            self,
-            "Charger une grille",
-            "",
-            "Fichiers JSON (*.json)"
-        )
-        if chemin:
-            with open(chemin, 'r', encoding='utf-8') as f:
-                self.__grille_data = json.load(f)
-            self.__label_accueil.hide()
-            self.__grille_widget.afficher(self.__grille_data, self.__theme_sombre)
-            self.afficher_grille_centree()
-
-    def afficher_grille_centree(self):
-        '''
-        Affiche la grille au centre avec le titre NEONAURE! au-dessus,
-        le menu a gauche et le chrono a droite.
-        '''
-        conteneur = QWidget()
-        layout_principal = QHBoxLayout()
-        # menu lateral a gauche#
-        layout_principal.addWidget(self.__menu_gauche, alignment=Qt.AlignmentFlag.AlignTop)
-        # espace pour centrer la grille#
-        layout_principal.addStretch()
-        # colonne centrale : titre + grille #
-        layout_centre = QVBoxLayout()
-        layout_centre.addWidget(self.__label_titre, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout_centre.addWidget(self.__grille_widget, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout_centre.addStretch()
-        layout_principal.addLayout(layout_centre)
-        # espace entre la grille et le chrono#
-        layout_principal.addStretch()
-        # chrono a droite, aligne en haut#
-        layout_principal.addWidget(self.__label_chrono, alignment=Qt.AlignmentFlag.AlignTop)
-        conteneur.setLayout(layout_principal)
-        self.setCentralWidget(conteneur)
-
-    def retour_accueil(self):
-        self.__grille_data = None
-        self.__label_accueil = QLabel("Bienvenue dans Neonaure !\nChargez une grille via le menu Fichier.")
-        self.__label_accueil.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.__label_accueil.setFont(self.__police_titre)
-        self.__label_accueil.setStyleSheet("color: #FFFF00; background-color: transparent; font-size: 36px;")
-        self.setCentralWidget(self.__label_accueil)
-
-    def __sauvegarder_grille(self):
-        if self.__grille_data is None:
-            QMessageBox.warning(self, "Attention", "Aucune grille chargee.")
-            return
-
-        entries = self.__grille_widget.get_entries()
-        grille_sauvegarde = {}
-
-        for nom_motif, cases in self.__grille_data.items():
-            nouvelle_liste = []
-            for case in cases:
-                row, col, valeur_init = case
-                entry = entries.get((row, col))
-                if entry is not None:
-                    texte = entry.text()
-                    val = int(texte) if texte.isdigit() else 0
-                else:
-                    val = valeur_init
-                nouvelle_liste.append([row, col, val])
-            grille_sauvegarde[nom_motif] = nouvelle_liste
-
-        chemin, _ = QFileDialog.getSaveFileName(
-            self,
-            "Sauvegarder la grille",
-            "",
-            "Fichiers JSON (*.json)"
-        )
-        if chemin:
-            with open(chemin, 'w', encoding='utf-8') as f:
-                json.dump(grille_sauvegarde, f, indent=4)
-            QMessageBox.information(self, "Succes", "Grille sauvegardee.")
+    # --------------- chrono --------------- #
 
     def __incrementer(self):
         self.__temps += 1
@@ -364,13 +373,23 @@ class Vue(QMainWindow):
         self.__temps = 0
         self.__label_chrono.setText("00:00")
 
-    #-----------getter-----------------#
+    # ----------- setters ----------- #
 
-    def get_grille_data(self) -> dict:
-        return self.__grille_data
+    def set_grille_data(self, data):
+        """Enregistre les données brutes de la grille (pour le changement de thème).
+
+        Args:
+            data (dict): Les données brutes de la grille.
+        """
+        self.__grille_data = data
+
+    # -----------getters-----------------#
 
     def get_grille_widget(self) -> GrilleWidget:
         return self.__grille_widget
+
+    def get_menu_gauche(self) -> MenuGauche:
+        return self.__menu_gauche
 
     def get_action_charger(self):
         return self.__action_charger
@@ -378,32 +397,14 @@ class Vue(QMainWindow):
     def get_action_sauvegarder(self):
         return self.__action_sauvegarder
 
-    def get_action_verifier(self):
-        return self.__action_verifier
+    def get_action_theme_clair(self):
+        return self.__action_theme_clair
 
-    def get_action_verifier_voisinage(self):
-        return self.__action_verifier_voisinage
-
-    def get_action_resoudre(self):
-        return self.__action_resoudre
-
-    def get_action_nouvelle(self):
-        return self.__action_nouvelle
-
-    def get_charger_grille(self):
-        return self.__charger_grille
-
-    def get_sauvegarder_grille(self):
-        return self.__sauvegarder_grille
+    def get_action_theme_sombre(self):
+        return self.__action_theme_sombre
 
     def get_label_chrono(self):
         return self.__label_chrono
 
-    def get_label_titre(self):
-        return self.__label_titre
-
-    def get_theme_sombre(self):
+    def get_theme_sombre(self) -> bool:
         return self.__theme_sombre
-
-    def get_menu_gauche(self) -> MenuGauche:
-        return self.__menu_gauche
