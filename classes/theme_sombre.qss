@@ -16,6 +16,10 @@ QMenu {
     color: white;
 }
 
+QMenu::item {
+    padding: 4px 20px 4px 12px;
+}
+
 QMenu::item:selected {
     background-color: #0f3460;
 }
