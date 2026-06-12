@@ -14,8 +14,11 @@ if __name__ == "__main__":
     
     
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    font_path = os.path.join(base_dir, "vue", "qss", "LuckiestGuy-Regular.ttf")
-    QFontDatabase.addApplicationFont(font_path)
+    luckiest_guy = os.path.join(base_dir, "vue", "qss", "LuckiestGuy-Regular.ttf")
+    QFontDatabase.addApplicationFont(luckiest_guy)
+    
+    technology = os.path.join(base_dir, "vue", "qss", "Technology.ttf")
+    QFontDatabase.addApplicationFont(technology)
 
     qss_path = os.path.join(base_dir, "vue", "qss", "menu_style.qss")    
     with open(qss_path, "r") as f:

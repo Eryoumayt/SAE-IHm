@@ -21,10 +21,8 @@ class Menu(QWidget):
         # ------------- QPushButtons (Démarrer et Paramètres) ------------- #
         
         self.start: QPushButton = QPushButton("Démarrer")
-        self.start.setObjectName("Start")
         
         self.settings: QPushButton = QPushButton("Paramètres")
-        self.start.setObjectName("Settings")
         
         # ------------- QLabel (Crédit en bas de page) ------------- #
         
