@@ -1,6 +1,6 @@
 import json
 from PyQt6.QtWidgets import  QFileDialog,QMessageBox,QHBoxLayout, QWidget,QVBoxLayout
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt,QObject
 from solver import solver
 from Grille import Grille
 
@@ -23,7 +23,7 @@ class SolverWorker(QThread):
         resultat = s.resolver()
         self.termine.emit(resultat, s.grille)
 
-class controller():
+class controller(QObject):
     """Le controlleur pour gérer les interactions entre le modèle (Grille) et la vue (Vue).
     Il connecte les actions de la vue à des méthodes qui manipulent le modèle et mettent à jour la vue en conséquence.
     
@@ -47,6 +47,8 @@ class controller():
             model (Grille): L'instance du modèle représentant la grille de jeu.
             view (Vue): L'instance de la vue représentant l'interface utilisateur.
         """
+        super().__init__()
+
         self.model = model
         self.view = view
         self.case_selectionnee = None
@@ -97,6 +99,11 @@ class controller():
         layout_horizontal.addWidget(self.view.get_label_chrono())  
         conteneur.setLayout(layout_horizontal)  
         self.view.setCentralWidget(conteneur)
+        # Connecter les signaux des cases éditables#
+        entries = self.view.get_grille_widget().get_entries()
+        for (row, col), entry in entries.items():
+            entry.installEventFilter(self)
+            entry.textChanged.connect(lambda texte, r=row, c=col: self.on_value_enter(r, c))
         self.view.demarrer_chrono()
         
             
@@ -265,3 +272,58 @@ class controller():
                             conflits.add((row + dr, col + dc))
 
         self.view.get_grille_widget().surligner_conflits(conflits)
+        
+        
+    def eventFilter(self, obj, event):
+        """Détecte quand une case reçoit le focus (clic) et la sélectionne."""
+        from PyQt6.QtCore import QEvent
+        if event.type() == QEvent.Type.FocusIn:
+            entries = self.view.get_grille_widget().get_entries()
+            for (row, col), entry in entries.items():
+                if entry is obj:
+                    self.case_selectionnee = (row, col)
+                    self.view.get_grille_widget().surligner_selection(row, col)
+                    break
+        return False
+
+    def on_case_click(self):
+        """Gère la sélection d'une case lors du clic."""
+        # La logique est dans eventFilter, cette méthode est conservée pour extension future#
+        pass
+
+    def on_value_enter(self, row, col):
+        """Gère la saisie d'une valeur dans une case et valide en temps réel.
+
+        Args:
+            row (int): Ligne de la case modifiée.
+            col (int): Colonne de la case modifiée.
+        """
+        # Lancer la vérification de voisinage automatiquement#
+        self.on_verifier_voisinage()
+
+        # Auto-avance : passer à la prochaine case vide#
+        entries = self.view.get_grille_widget().get_entries()
+        entry = entries.get((row, col))
+        if entry is not None and entry.text().isdigit() and int(entry.text()) != 0:
+            # Chercher la prochaine case vide après celle-ci#
+            positions = sorted(entries.keys())
+            idx = positions.index((row, col))
+            for i in range(idx + 1, len(positions)):
+                prochaine = entries[positions[i]]
+                if not prochaine.text().isdigit() or int(prochaine.text()) == 0:
+                    prochaine.setFocus()
+                    return
+            # Si rien après, chercher depuis le début#
+            for i in range(0, idx):
+                prochaine = entries[positions[i]]
+                if not prochaine.text().isdigit() or int(prochaine.text()) == 0:
+                    prochaine.setFocus()
+                    return
+
+    def on_delete(self):
+        """Efface la valeur de la case actuellement sélectionnée."""
+        if self.case_selectionnee is not None:
+            entries = self.view.get_grille_widget().get_entries()
+            entry = entries.get(self.case_selectionnee)
+            if entry is not None:
+                entry.clear()
