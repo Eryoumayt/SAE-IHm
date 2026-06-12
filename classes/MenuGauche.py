@@ -17,15 +17,12 @@ class MenuGauche(QWidget):
         self.solve: QPushButton = QPushButton("Résoudre")
         self.new: QPushButton = QPushButton("Nouvelle Partie")
         self.save: QPushButton = QPushButton("Sauvegarder")
-        self.regles: QPushButton = QPushButton("Règles")
-        self.quitter: QPushButton = QPushButton("Quitter")
         
-        # Chrono#
-        self.__temps = 0
-        self.__chrono = QTimer(self)
-        self.__chrono.timeout.connect(self.__incrementer)
-        self.__label_chrono = QLabel("00:00")
-        self.__label_chrono.setStyleSheet('font-family: "TECHNOLOGY"; font-size: 32px; color: #FFFF00;')
+        # Record#
+        self.__record = None
+        self.__label_record = QLabel("Record : --:--")
+        self.__label_record.setStyleSheet('font-family: "TECHNOLOGY"; font-size: 20px; color: #FFFF00;')
+        self.__label_record.setAlignment(Qt.AlignmentFlag.AlignHCenter)
        
         # Layout#
         self.vboxLayout: QVBoxLayout = QVBoxLayout()
@@ -34,9 +31,8 @@ class MenuGauche(QWidget):
         self.vboxLayout.addWidget(self.new)
         self.vboxLayout.addWidget(self.save)
         self.vboxLayout.addWidget(self.verify)
-        self.vboxLayout.addWidget(self.regles)
-        self.vboxLayout.addWidget(self.quitter)
-        self.vboxLayout.addWidget(self.__label_chrono, alignment=Qt.AlignmentFlag.AlignHCenter)
+        self.vboxLayout.addStretch()
+        self.vboxLayout.addWidget(self.__label_record, alignment=Qt.AlignmentFlag.AlignHCenter)
         
         self.VWidget: QWidget = QWidget()
         self.VWidget.setLayout(self.vboxLayout)
@@ -44,36 +40,29 @@ class MenuGauche(QWidget):
         self.layout.addWidget(self.VWidget, alignment=Qt.AlignmentFlag.AlignCenter)
         self.setLayout(self.layout)
     
-    # -------------- Chrono -------------- #
-    def __incrementer(self):
-        self.__temps += 1
-        minutes = self.__temps // 60
-        secondes = self.__temps % 60
-        self.__label_chrono.setText(f"{minutes:02d}:{secondes:02d}")
+    # -------------- Record -------------- #
+    def set_record(self, minutes: int, secondes: int):
+        """Met à jour le record si le temps est meilleur que le précédent."""
+        temps_total = minutes * 60 + secondes
+        if self.__record is None or temps_total < self.__record:
+            self.__record = temps_total
+            self.__label_record.setText(f"Record : {minutes:02d}:{secondes:02d}")
 
-    def demarrer_chrono(self):
-        self.__temps = 0
-        self.__label_chrono.setText("00:00")
-        self.__chrono.start(1000)
-
-    def arreter_chrono(self):
-        self.__chrono.stop()
-
-    def reinitialiser_chrono(self):
-        self.__chrono.stop()
-        self.__temps = 0
-        self.__label_chrono.setText("00:00")
+    def reinitialiser_record(self):
+        """Remet le record à zéro."""
+        self.__record = None
+        self.__label_record.setText("Record : --:--")
 
     def appliquer_theme(self, sombre: bool):
         """Applique le thème sombre ou clair au menu."""
         if sombre:
             self.setStyleSheet("background-color: #16213e; color: white;")
             self.title.setStyleSheet('font-family: "Luckiest Guy"; font-size: 30px; color: #FFFF00;')
-            self.__label_chrono.setStyleSheet('font-family: "TECHNOLOGY"; font-size: 32px; color: #FFFF00;')
+            self.__label_record.setStyleSheet('font-family: "TECHNOLOGY"; font-size: 20px; color: #FFFF00;')
         else:
             self.setStyleSheet("background-color: #002244; color: white;")
             self.title.setStyleSheet('font-family: "Luckiest Guy"; font-size: 30px; color: #FFFF00;')
-            self.__label_chrono.setStyleSheet('font-family: "TECHNOLOGY"; font-size: 32px; color: #FFFF00;')
+            self.__label_record.setStyleSheet('font-family: "TECHNOLOGY"; font-size: 20px; color: #FFFF00;')
 
     # -------------- Getters -------------- #
     def get_btn_verify(self):
@@ -84,9 +73,5 @@ class MenuGauche(QWidget):
         return self.new
     def get_btn_save(self):
         return self.save
-    def get_btn_regles(self):
-        return self.regles
-    def get_btn_quitter(self):
-        return self.quitter
-    def get_label_chrono(self):
-        return self.__label_chrono
+    def get_label_record(self):
+        return self.__label_record

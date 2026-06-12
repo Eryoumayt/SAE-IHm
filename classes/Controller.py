@@ -62,8 +62,8 @@ class controller(QObject):
         self.view.get_menu_gauche().get_btn_solve().clicked.connect(self.on_solver)
         self.view.get_menu_gauche().get_btn_new().clicked.connect(self.new_game)
         self.view.get_menu_gauche().get_btn_save().clicked.connect(self.on_save)
-        self.view.get_menu_gauche().get_btn_regles().clicked.connect(self.on_regles)
-        self.view.get_menu_gauche().get_btn_quitter().clicked.connect(self.view.close)
+        self.view.get_action_regles().triggered.connect(self.on_regles)
+        self.view.get_action_quitter().triggered.connect(self.view.close)
 
         # Connexions menu bar
         self.view.get_action_charger().triggered.connect(self.on_open)

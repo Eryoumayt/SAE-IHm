@@ -290,7 +290,7 @@ class Vue(QMainWindow):
     # ------------------- menu bar ------------------#
 
     def __creer_menu(self):
-        """Crée la barre de menu (Fichier + Apparence)."""
+        """Crée la barre de menu (Fichier + Jeu + Apparence)."""
         menubar = self.menuBar()
 
         menu_fichier = menubar.addMenu("Fichier")
@@ -302,10 +302,17 @@ class Vue(QMainWindow):
         self.__action_sauvegarder.setShortcut("Ctrl+S")
         menu_fichier.addAction(self.__action_sauvegarder)
 
-        menu_fichier.addSeparator()
+        menu_jeu = menubar.addMenu("Jeu")
+
+        self.__action_regles = QAction("Règles du jeu", self)
+        self.__action_regles.triggered.connect(self.__afficher_regles)
+        menu_jeu.addAction(self.__action_regles)
+
+        menu_jeu.addSeparator()
+
         self.__action_quitter = QAction("Quitter", self)
         self.__action_quitter.triggered.connect(self.close)
-        menu_fichier.addAction(self.__action_quitter)
+        menu_jeu.addAction(self.__action_quitter)
 
         menu_apparence = menubar.addMenu("Apparence")
         self.__action_theme_clair = QAction("Thème clair", self)
@@ -317,6 +324,18 @@ class Vue(QMainWindow):
         chemin_sombre = os.path.join(os.path.dirname(__file__), "theme_sombre.qss")
         self.__action_theme_sombre.triggered.connect(lambda: self.__appliquer_theme(chemin_sombre))
         menu_apparence.addAction(self.__action_theme_sombre)
+
+    # --------------- règles --------------- #
+
+    def __afficher_regles(self):
+        """Affiche une boîte de dialogue avec les règles du jeu."""
+        QMessageBox.information(self, "Règles du Néonaure",
+            "Le Néonaure est un puzzle similaire au Suguru.\n\n"
+            "3 règles :\n"
+            "1. Chaque case doit contenir un chiffre.\n"
+            "2. Les 8 voisins d'une case doivent avoir des valeurs différentes.\n"
+            "3. Chaque motif de taille N doit contenir une permutation de 1 à N."
+        )
 
     # --------------- layout --------------- #
 
@@ -396,6 +415,12 @@ class Vue(QMainWindow):
 
     def get_action_sauvegarder(self):
         return self.__action_sauvegarder
+
+    def get_action_quitter(self):
+        return self.__action_quitter
+
+    def get_action_regles(self):
+        return self.__action_regles
 
     def get_action_theme_clair(self):
         return self.__action_theme_clair
