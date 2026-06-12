@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton
+from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton,QMessageBox
 from PyQt6.QtGui import QFontDatabase
 
 class Menu(QWidget):
@@ -21,8 +21,11 @@ class Menu(QWidget):
         # ------------- QPushButtons (Démarrer et Paramètres) ------------- #
         
         self.start: QPushButton = QPushButton("Démarrer")
-        
-        self.settings: QPushButton = QPushButton("Paramètres")
+        self.regles: QPushButton = QPushButton("Regles du jeu")
+        self.quit: QPushButton = QPushButton("Quitter")
+        self.quit.clicked.connect(self.close)
+        self.regles.clicked.connect(self.__afficher_regles)
+
         
         # ------------- QLabel (Crédit en bas de page) ------------- #
         
@@ -34,7 +37,9 @@ class Menu(QWidget):
         self.vboxLayout = QVBoxLayout()
         
         self.vboxLayout.addWidget(self.game_title)
-        self.vboxLayout.addWidget(self.start) ; self.vboxLayout.addWidget(self.settings)
+        self.vboxLayout.addWidget(self.start) ; 
+        self.vboxLayout.addWidget(self.regles) ; 
+        self.vboxLayout.addWidget(self.quit)
         
         self.vboxWidget = QWidget()
         self.vboxWidget.setLayout(self.vboxLayout)
@@ -43,6 +48,15 @@ class Menu(QWidget):
         self.layout.addWidget(self.vboxWidget, alignment = Qt.AlignmentFlag.AlignCenter)
         self.layout.addStretch() # Permet de déplacer les crédits en bas de page
         self.layout.addWidget(self.credits, alignment = Qt.AlignmentFlag.AlignCenter)
+        
+    def __afficher_regles(self):
+        QMessageBox.information(self, "Règles du Néonaure",
+            "Le Néonaure est un puzzle similaire au Suguru.\n\n"
+            "3 règles :\n"
+            "1. Chaque case doit contenir un chiffre.\n"
+            "2. Les 8 voisins d'une case doivent avoir des valeurs différentes.\n"
+            "3. Chaque motif de taille N doit contenir une permutation de 1 à N."
+        )
         
         
  # ------------- Getters ------------- #
