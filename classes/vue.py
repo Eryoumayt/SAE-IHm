@@ -1,8 +1,8 @@
 import sys
 import os
 import json
-from PyQt6.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit, QMessageBox
-from PyQt6.QtGui import QAction, QFont, QFontDatabase, QIntValidator
+from PyQt6.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QMainWindow, QLabel, QFileDialog, QWidget, QGridLayout, QLineEdit, QMessageBox, QGraphicsDropShadowEffect
+from PyQt6.QtGui import QAction, QFont, QFontDatabase, QIntValidator, QColor
 from PyQt6.QtCore import Qt, QTimer
 from .MenuGauche import MenuGauche
 
@@ -230,6 +230,13 @@ class Vue(QMainWindow):
         self.__label_titre.setFont(self.__police_titre)
         self.__label_titre.setStyleSheet("color: #FFFF00; background-color: transparent;")
 
+        # Effet néon derrière le titre
+        self.__neon_titre = QGraphicsDropShadowEffect()
+        self.__neon_titre.setBlurRadius(30)
+        self.__neon_titre.setColor(QColor(255, 212, 0))  # #ffd400
+        self.__neon_titre.setOffset(0, 0)
+        self.__label_titre.setGraphicsEffect(self.__neon_titre)
+
         # Chrono
         self.__temps = 0
         self.__chrono = QTimer(self)
@@ -256,22 +263,16 @@ class Vue(QMainWindow):
         self.__conteneur = QWidget()
         self.__layout_principal = QHBoxLayout()
 
-        # Gauche : menu latéral
-        self.__layout_principal.addWidget(self.__menu_gauche, alignment=Qt.AlignmentFlag.AlignTop)
+        # Gauche : menu latéral = 1 part
+        self.__layout_principal.addWidget(self.__menu_gauche, 1)
 
-        # Espace
-        self.__layout_principal.addStretch()
-
-        # Centre : titre + (accueil OU grille)
+        # Centre : titre + (accueil OU grille) = 3 parts
         self.__layout_centre = QVBoxLayout()
         self.__layout_centre.addWidget(self.__label_titre, alignment=Qt.AlignmentFlag.AlignCenter)
         self.__layout_centre.addWidget(self.__label_accueil, alignment=Qt.AlignmentFlag.AlignCenter)
         self.__layout_centre.addWidget(self.__grille_widget, alignment=Qt.AlignmentFlag.AlignCenter)
         self.__layout_centre.addStretch()
-        self.__layout_principal.addLayout(self.__layout_centre)
-
-        # Espace
-        self.__layout_principal.addStretch()
+        self.__layout_principal.addLayout(self.__layout_centre, 3)
 
         # Droite : chrono
         self.__layout_principal.addWidget(self.__label_chrono, alignment=Qt.AlignmentFlag.AlignTop)
