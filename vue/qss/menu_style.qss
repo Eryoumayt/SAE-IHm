@@ -5,7 +5,7 @@ QLabel#Title {
     padding-bottom: 30px;
 }
 
-QPushButton#MenuButton {
+QPushButton {
     color: black;
     font-size: 30px;
     font-family: Arial, Helvetica, sans-serif;
