@@ -249,6 +249,7 @@ class Vue(QMainWindow):
 
         # Menu latéral gauche
         self.__menu_gauche = MenuGauche()
+        self.__menu_gauche.appliquer_theme(False)
 
         # Label d'accueil affiché au démarrage
         self.__label_accueil = QLabel("Bienvenue dans Néonaure !\nCliquez sur Nouvelle Partie pour commencer.")
