@@ -1,5 +1,5 @@
-from Motif import Motif
-from Case import Case
+from .Motif import Motif
+from .Case import Case
 import json
 
 class Grille():

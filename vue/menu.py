@@ -47,22 +47,25 @@ class Menu(QWidget):
         self.layout.addWidget(self.credits, alignment = Qt.AlignmentFlag.AlignCenter)
         
         
+ # ------------- Getters ------------- #
+    def get_start(self):
+       return self.start
         
         
 # -------------- MAIN -------------- #
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
     
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    font_path = os.path.join(base_dir, "qss", "LuckiestGuy-Regular.ttf")
-    QFontDatabase.addApplicationFont(font_path)
+#     base_dir = os.path.dirname(os.path.abspath(__file__))
+#     font_path = os.path.join(base_dir, "qss", "LuckiestGuy-Regular.ttf")
+#     QFontDatabase.addApplicationFont(font_path)
 
-    qss_path = os.path.join(base_dir, "qss", "menu_style.qss")
-    with open(qss_path, "r") as f:
-        app.setStyleSheet(f.read())
+#     qss_path = os.path.join(base_dir, "qss", "menu_style.qss")
+#     with open(qss_path, "r") as f:
+#         app.setStyleSheet(f.read())
         
-    menu = Menu()
-    menu.show()
+#     menu = Menu()
+#     menu.show()
         
-    sys.exit(app.exec())
+#     sys.exit(app.exec())

@@ -1,8 +1,8 @@
 import json
 from PyQt6.QtWidgets import  QFileDialog,QMessageBox,QHBoxLayout, QWidget,QVBoxLayout
 from PyQt6.QtCore import Qt,QObject
-from solver import solver
-from Grille import Grille
+from .solver import solver
+from .Grille import Grille
 
 
 from PyQt6.QtCore import QThread, pyqtSignal

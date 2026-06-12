@@ -1,4 +1,4 @@
-from Case import Case
+from .Case import Case
 
 class Motif():
     def __init__(self, cases: list):
