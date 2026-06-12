@@ -17,7 +17,7 @@ if __name__ == "__main__":
     
     # Liaison au fichier de la font (chemin relatif)
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    font_path = os.path.join(base_dir, "vue\qss\LuckiestGuy-Regular.ttf", "LuckiestGuy-Regular.ttf")
+    font_path = os.path.join(base_dir, "vue\qss", "LuckiestGuy-Regular.ttf")
     QFontDatabase.addApplicationFont(font_path)
 
     # Liaison au fichier qss pour le style du menu à droite (chemin relatif)
