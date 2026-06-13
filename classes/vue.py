@@ -297,10 +297,7 @@ class MenuGauche(QWidget):
 class SelectionDifficulte(QWidget):
     def __init__(self):
         super().__init__()
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(QPalette.ColorRole.Window, QColor("#00689f"))
-        self.setPalette(palette)
+        self.__bg_color = QColor("#00a6ff")
 
         chemin_luckiest = os.path.join(os.path.dirname(__file__), "fonts", "LuckiestGuy-Regular.ttf")
         if os.path.exists(chemin_luckiest):
@@ -400,7 +397,10 @@ class SelectionDifficulte(QWidget):
         layout_principal.addLayout(layout_boutons)
 
         self.setLayout(layout_principal)
-        self.setStyleSheet("background-color: #00689f;")
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), self.__bg_color)
 
     def get_btn_facile(self):
         return self.__btn_facile
@@ -514,7 +514,7 @@ class Vue(QMainWindow):
 
     def afficher_difficulte(self):
         self.__pages.setCurrentIndex(0)
-        self.setStyleSheet("QMainWindow { background-color: #00689f; }")
+        self.setStyleSheet("")
         self.menuBar().hide()
 
     def afficher_grille_centree(self):
