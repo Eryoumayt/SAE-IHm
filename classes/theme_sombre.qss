@@ -2,6 +2,14 @@ QMainWindow {
     background-color: #1a1a2e;
 }
 
+QWidget#menuGauche {
+    background-color: #16213e;
+}
+
+QWidget#conteneurCentre {
+    background-color: #1a1a2e;
+}
+
 QMenuBar {
     background-color: #16213e;
     color: white;
@@ -22,4 +30,13 @@ QMenu::item {
 
 QMenu::item:selected {
     background-color: #0f3460;
+}
+
+QLabel {
+    color: white;
+}
+
+QLineEdit {
+    background-color: #3c3c3c;
+    color: white;
 }

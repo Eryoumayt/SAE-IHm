@@ -1,4 +1,4 @@
-import json
+﻿import json
 import random
 import glob
 import os
@@ -11,13 +11,6 @@ from PyQt6.QtCore import QThread, pyqtSignal
 
 
 class SolverWorker(QThread):
-    """Exécute le solveur dans un thread séparé pour ne pas bloquer l'interface.
-    
-    Args:
-        chemin (str): Le chemin vers le fichier JSON de la grille à résoudre.
-    Attributes:
-        chemin (str): Le chemin vers le fichier JSON de la grille à résoudre.
-    """
     termine = pyqtSignal(bool, object)
 
     def __init__(self, chemin):
@@ -31,24 +24,8 @@ class SolverWorker(QThread):
 
 
 class controller(QObject):
-    """Le contrôleur gère les interactions entre le modèle (Grille) et la vue (Vue).
-    Il connecte les actions de la vue à des méthodes qui manipulent le modèle et mettent à jour la vue.
-
-    Attributes:
-        model (Grille): L'instance du modèle représentant la grille de jeu.
-        view (Vue): L'instance de la vue représentant l'interface utilisateur.
-        case_selectionnee (tuple): Les coordonnées (row, col) de la case actuellement sélectionnée.
-        donnees_brutes (dict): Les données brutes de la grille chargée.
-        chemin_grille (str): Le chemin vers le fichier JSON de la grille actuellement chargée.
-    """
 
     def __init__(self, model, view):
-        """Initialise le contrôleur avec une instance du modèle et de la vue, et connecte les actions.
-
-        Args:
-            model (Grille): L'instance du modèle représentant la grille de jeu.
-            view (Vue): L'instance de la vue représentant l'interface utilisateur.
-        """
         super().__init__()
 
         self.model = model
@@ -56,20 +33,26 @@ class controller(QObject):
         self.case_selectionnee = None
         self.donnees_brutes = None
         self.chemin_grille = None
+        self.__difficulte_facile = True
+
+        # Connexions page difficulte
+        self.view.get_selection_difficulte().get_btn_facile().clicked.connect(self.__on_difficulte_facile)
+        self.view.get_selection_difficulte().get_btn_difficile().clicked.connect(self.__on_difficulte_difficile)
 
         # Connexions sidebar
-        self.view.get_menu_gauche().get_btn_verify().clicked.connect(self.on_check)
-        self.view.get_menu_gauche().get_btn_solve().clicked.connect(self.on_solver)
-        self.view.get_menu_gauche().get_btn_new().clicked.connect(self.new_game)
-        self.view.get_menu_gauche().get_btn_save().clicked.connect(self.on_save)
-        self.view.get_action_regles().triggered.connect(self.on_regles)
-        self.view.get_action_quitter().triggered.connect(self.view.close)
+        self.view.get_menu_gauche().get_btn_verifier().clicked.connect(self.on_check)
+        self.view.get_menu_gauche().get_btn_resoudre().clicked.connect(self.on_solver)
+        self.view.get_menu_gauche().get_btn_nouvelle().clicked.connect(self.new_game)
+        self.view.get_menu_gauche().get_btn_sauvegarder().clicked.connect(self.on_save)
+        self.view.get_menu_gauche().get_btn_back().clicked.connect(self.__on_retour_menu)
 
         # Connexions menu bar
         self.view.get_action_charger().triggered.connect(self.on_open)
         self.view.get_action_sauvegarder().triggered.connect(self.on_save)
+        self.view.get_action_quitter().triggered.connect(self.view.close)
+        self.view.get_action_regles().triggered.connect(self.on_regles)
 
-        # Connexions changement de thème (reconnecter les signaux après reconstruction)
+        # Connexions changement de theme
         self.view.get_action_theme_clair().triggered.connect(self.__on_theme_change)
         self.view.get_action_theme_sombre().triggered.connect(self.__on_theme_change)
 
@@ -78,15 +61,24 @@ class controller(QObject):
         QShortcut(QKeySequence("Ctrl+R"), self.view).activated.connect(self.on_solver)
         QShortcut(QKeySequence("Ctrl+N"), self.view).activated.connect(self.new_game)
 
-        # Charger une grille aléatoire au démarrage
+    # -------------------------------------------------------- #
+
+    def __on_difficulte_facile(self):
+        self.__difficulte_facile = True
+        self.view.set_difficulte_facile(True)
         self.new_game()
+
+    def __on_difficulte_difficile(self):
+        self.__difficulte_facile = False
+        self.view.set_difficulte_facile(False)
+        self.new_game()
+
+    def __on_retour_menu(self):
+        self.view.afficher_difficulte()
 
     # -------------------------------------------------------- #
 
     def __reconnecter_signaux(self):
-        """Reconnecte les eventFilters et signaux textChanged de toutes les entries.
-        Utile après un afficher() qui reconstruit les widgets (solver, thème).
-        """
         entries = self.view.get_grille_widget().get_entries()
         for (row, col), entry in entries.items():
             entry.installEventFilter(self)
@@ -99,29 +91,23 @@ class controller(QObject):
     # -------------------------------------------------------- #
 
     def __charger_grille(self, chemin):
-        """Charge une grille depuis un fichier JSON et met à jour la vue.
-
-        Args:
-            chemin (str): Le chemin vers le fichier JSON contenant la grille à charger.
-        """
         self.model = Grille(chemin)
         with open(chemin, 'r', encoding='utf-8') as f:
             self.donnees_brutes = json.load(f)
         self.chemin_grille = chemin
 
         self.view.set_grille_data(self.donnees_brutes)
-        self.view.get_grille_widget().afficher(self.donnees_brutes, self.view.get_theme_sombre())
+        self.view.get_grille_widget().afficher(self.donnees_brutes)
         self.view.afficher_grille_centree()
         self.__reconnecter_signaux()
 
         self.view.reinitialiser_chrono()
         self.view.demarrer_chrono()
-        self.view.get_menu_gauche().get_btn_solve().setEnabled(True)
+        self.view.get_menu_gauche().get_btn_resoudre().setEnabled(True)
 
     # -------------------------------------------------------- #
 
     def on_open(self):
-        """Ouvre une boîte de dialogue pour sélectionner un fichier JSON contenant une grille."""
         chemin, _ = QFileDialog.getOpenFileName(self.view, "Charger une grille", "", "JSON (*.json)")
         if not chemin:
             return
@@ -130,7 +116,6 @@ class controller(QObject):
     # -------------------------------------------------------- #
 
     def new_game(self):
-        """Charge une grille aléatoire depuis le dossier Grille/."""
         base_dir = os.path.dirname(os.path.abspath(__file__))
         dossier_grilles = os.path.join(base_dir, "..", "Grille")
         grilles = glob.glob(os.path.join(dossier_grilles, "*.json"))
@@ -141,12 +126,8 @@ class controller(QObject):
     # -------------------------------------------------------- #
 
     def on_save(self):
-        """Sauvegarde la grille actuelle dans un fichier JSON.
-        Les cases éditables sont sauvegardées avec leur valeur initiale (0) et la valeur du joueur,
-        pour que les cases restent éditables au rechargement tout en conservant la progression.
-        """
         if self.donnees_brutes is None:
-            QMessageBox.warning(self.view, "Attention", "Aucune grille chargée.")
+            QMessageBox.warning(self.view, "Attention", "Aucune grille chargee.")
             return
 
         entries = self.view.get_grille_widget().get_entries()
@@ -171,12 +152,11 @@ class controller(QObject):
         if chemin:
             with open(chemin, 'w', encoding='utf-8') as f:
                 json.dump(grille_sauvegarde, f, indent=4)
-            QMessageBox.information(self.view, "Succès", "Grille sauvegardée.")
+            QMessageBox.information(self.view, "Succes", "Grille sauvegardee.")
 
     # -------------------------------------------------------- #
 
     def on_check(self):
-        """Vérifie si la grille actuelle est valide et affiche un message."""
         if self.donnees_brutes is None:
             return
 
@@ -192,22 +172,21 @@ class controller(QObject):
 
         valide = self.model.is_valid()
         if valide:
-            QMessageBox.information(self.view, "Vérification", "La grille est valide !")
+            QMessageBox.information(self.view, "Verification", "La grille est valide !")
             self.view.arreter_chrono()
         else:
-            QMessageBox.warning(self.view, "Vérification", "La grille n'est pas valide.")
+            QMessageBox.warning(self.view, "Verification", "La grille n'est pas valide.")
 
     # -------------------------------------------------------- #
 
     def on_solver(self):
-        """Lance le solveur dans un thread séparé."""
         if self.donnees_brutes is None:
             return
 
         with open("temp_grille.json", 'w', encoding='utf-8') as f:
             json.dump(self.donnees_brutes, f)
 
-        self.view.get_menu_gauche().get_btn_solve().setEnabled(False)
+        self.view.get_menu_gauche().get_btn_resoudre().setEnabled(False)
         self.worker = SolverWorker("temp_grille.json")
         self.worker.termine.connect(self.__on_solver_fini)
         self.worker.start()
@@ -215,62 +194,49 @@ class controller(QObject):
     # -------------------------------------------------------- #
 
     def __on_solver_fini(self, resultat, grille):
-        """Callback appelé lorsque le solveur a terminé.
-
-        Args:
-            resultat (bool): Indique si une solution a été trouvée.
-            grille (dict): La grille solution trouvée par le solveur.
-        """
-        self.view.get_menu_gauche().get_btn_solve().setEnabled(True)
+        self.view.get_menu_gauche().get_btn_resoudre().setEnabled(True)
 
         if resultat:
-            self.view.get_grille_widget().afficher(grille, self.view.get_theme_sombre())
+            self.view.get_grille_widget().afficher(grille)
             self.__reconnecter_signaux()
             self.view.arreter_chrono()
-            QMessageBox.information(self.view, "Résolution", "Solution trouvée !")
+            QMessageBox.information(self.view, "Resolution", "Solution trouvee !")
         else:
-            QMessageBox.warning(self.view, "Résolution échouée", "Aucune solution n'a été trouvée pour cette grille.")
+            QMessageBox.warning(self.view, "Resolution echouee", "Aucune solution n'a ete trouvee pour cette grille.")
         self.worker.quit()
         self.worker.wait()
 
     # -------------------------------------------------------- #
 
     def __on_theme_change(self):
-        """Reconnecte les signaux après un changement de thème (la grille est reconstruite)."""
         self.__reconnecter_signaux()
 
     # -------------------------------------------------------- #
 
     def on_regles(self):
-        """Affiche les règles du jeu Néonaure."""
-        QMessageBox.information(self.view, "Règles du Néonaure",
-            "Le Néonaure est un puzzle similaire au Suguru.\n\n"
-            "3 règles :\n"
+        QMessageBox.information(self.view, "Regles du Neonature",
+            "Le Neonature est un puzzle similaire au Suguru.\n\n"
+            "3 regles :\n"
             "1. Chaque case doit contenir un chiffre.\n"
-            "2. Les 8 voisins d'une case doivent avoir des valeurs différentes.\n"
-            "3. Chaque motif de taille N doit contenir une permutation de 1 à N.\n\n"
+            "2. Les 8 voisins d'une case doivent avoir des valeurs differentes.\n"
+            "3. Chaque motif de taille N doit contenir une permutation de 1 a N.\n\n"
             "Raccourcis :\n"
             "Ctrl+O : Charger une grille\n"
             "Ctrl+S : Sauvegarder\n"
-            "Ctrl+R : Résoudre\n"
+            "Ctrl+R : Resoudre\n"
             "Ctrl+N : Nouvelle partie\n"
             "Suppr : Effacer la case\n"
-            "Flèches : Naviguer entre les cases"
+            "Fleches : Naviguer entre les cases"
         )
 
     # -------------------------------------------------------- #
 
     def on_verifier_voisinage(self):
-        """Détecte les conflits de voisinage et surligne les cases en rouge.
-        Parcourt toutes les cases remplies (éditables et non éditables) et
-        vérifie si un des 8 voisins contient la même valeur.
-        """
         if self.donnees_brutes is None:
             return
 
         entries = self.view.get_grille_widget().get_entries()
 
-        # Construire un dictionnaire de TOUTES les valeurs
         toutes_valeurs = {}
         for nom_motif, cases in self.donnees_brutes.items():
             for case in cases:
@@ -286,7 +252,6 @@ class controller(QObject):
                 if val != 0:
                     toutes_valeurs[(row, col)] = val
 
-        # Vérifier les conflits sur toutes les cases
         conflits = set()
         for (row, col), val in toutes_valeurs.items():
             for dr in [-1, 0, 1]:
@@ -305,12 +270,6 @@ class controller(QObject):
     # -------------------------------------------------------- #
 
     def eventFilter(self, obj, event):
-        """Détecte les événements clavier et souris sur les cases.
-
-        Args:
-            obj (QObject): L'objet qui a reçu l'événement.
-            event (QEvent): L'événement qui a été déclenché.
-        """
         if event.type() == QEvent.Type.FocusIn:
             entries = self.view.get_grille_widget().get_entries()
             for (row, col), entry in entries.items():
@@ -324,7 +283,6 @@ class controller(QObject):
             if event.key() == Qt.Key.Key_Delete:
                 self.on_delete()
                 return True
-            # Flèches directionnelles
             if self.case_selectionnee is not None:
                 row, col = self.case_selectionnee
                 if event.key() == Qt.Key.Key_Up and (row - 1, col) in entries:
@@ -345,12 +303,6 @@ class controller(QObject):
     # -------------------------------------------------------- #
 
     def on_value_enter(self, row, col):
-        """Gère la saisie d'une valeur dans une case et valide en temps réel.
-
-        Args:
-            row (int): Ligne de la case modifiée.
-            col (int): Colonne de la case modifiée.
-        """
         entries = self.view.get_grille_widget().get_entries()
         entry = entries.get((row, col))
         texte = entry.text()
@@ -367,20 +319,22 @@ class controller(QObject):
                 prochaine = entries[positions[i]]
                 if not prochaine.text().isdigit() or int(prochaine.text()) == 0:
                     prochaine.setFocus()
-                    self.on_verifier_voisinage()
+                    if self.__difficulte_facile:
+                        self.on_verifier_voisinage()
                     return
             for i in range(0, idx):
                 prochaine = entries[positions[i]]
                 if not prochaine.text().isdigit() or int(prochaine.text()) == 0:
                     prochaine.setFocus()
-                    self.on_verifier_voisinage()
+                    if self.__difficulte_facile:
+                        self.on_verifier_voisinage()
                     return
-        self.on_verifier_voisinage()
+        if self.__difficulte_facile:
+            self.on_verifier_voisinage()
 
     # -------------------------------------------------------- #
 
     def on_delete(self):
-        """Efface la valeur de la case actuellement sélectionnée."""
         if self.case_selectionnee is not None:
             entries = self.view.get_grille_widget().get_entries()
             entry = entries.get(self.case_selectionnee)

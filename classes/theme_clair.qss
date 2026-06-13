@@ -1,18 +1,26 @@
 QMainWindow {
-    background-color: #003366;
+    background-color: #00689f;
+}
+
+QWidget#menuGauche {
+    background-color: #16213e;
+}
+
+QWidget#conteneurCentre {
+    background-color: #00689f;
 }
 
 QMenuBar {
-    background-color: #002244;
+    background-color: #16213e;
     color: white;
 }
 
 QMenuBar::item:selected {
-    background-color: #001a33;
+    background-color: #002244;
 }
 
 QMenu {
-    background-color: #002244;
+    background-color: #16213e;
     color: white;
 }
 
@@ -21,5 +29,5 @@ QMenu::item {
 }
 
 QMenu::item:selected {
-    background-color: #001a33;
+    background-color: #002244;
 }
