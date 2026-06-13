@@ -297,7 +297,7 @@ class MenuGauche(QWidget):
 class SelectionDifficulte(QWidget):
     def __init__(self):
         super().__init__()
-        self.__bg_color = QColor("#00a6ff")
+        self.__bg_color = QColor("#00689f")
 
         chemin_luckiest = os.path.join(os.path.dirname(__file__), "fonts", "LuckiestGuy-Regular.ttf")
         if os.path.exists(chemin_luckiest):
