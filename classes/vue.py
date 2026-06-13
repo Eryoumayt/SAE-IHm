@@ -28,6 +28,7 @@ class GrilleWidget(QWidget):
         self.setLayout(self.__layout)
 
         self.__entries = {}
+        self.__labels = {}
 
         chemin_police = os.path.join(os.path.dirname(__file__), "fonts", "LuckiestGuy-Regular.ttf")
         if os.path.exists(chemin_police):
@@ -39,6 +40,7 @@ class GrilleWidget(QWidget):
     def afficher(self, grille_data: dict):
         self.__vider()
         self.__entries = {}
+        self.__labels = {}
 
         fond = "white"
         bordure_fine = "1px solid black"
@@ -74,6 +76,7 @@ class GrilleWidget(QWidget):
                     label.setFont(self.__police_case)
                     label.setStyleSheet(style)
                     self.__layout.addWidget(label, row, col)
+                    self.__labels[(row, col)] = label
                 else:
                     entry = QLineEdit()
                     entry.setFixedSize(TAILLE_CASE, TAILLE_CASE)
@@ -114,6 +117,17 @@ class GrilleWidget(QWidget):
     def nouvelle_partie(self):
         for entry in self.__entries.values():
             entry.clear()
+
+    def get_all_values(self) -> dict:
+        """Retourne un dictionnaire (row, col) -> valeur pour TOUTES les cellules"""
+        values = {}
+        for (row, col), entry in self.__entries.items():
+            texte = entry.text()
+            values[(row, col)] = int(texte) if texte.isdigit() else 0
+        for (row, col), label in self.__labels.items():
+            texte = label.text()
+            values[(row, col)] = int(texte) if texte.isdigit() else 0
+        return values
 
     def get_entries(self) -> dict:
         return self.__entries
@@ -582,7 +596,14 @@ class Vue(QMainWindow):
         self.__label_chrono.setStyleSheet("color: #FFFF00; background-color: transparent;")
 
         if self.__grille_data is not None:
+            # Sauvegarder les valeurs actuelles avant de re-afficher
+            valeurs_actuelles = self.__grille_widget.get_all_values()
             self.__grille_widget.afficher(self.__grille_data)
+            # Restaurer les valeurs saisies par l'utilisateur dans les entries
+            entries = self.__grille_widget.get_entries()
+            for (row, col), valeur in valeurs_actuelles.items():
+                if (row, col) in entries and valeur != 0:
+                    entries[(row, col)].setText(str(valeur))
 
     def __incrementer(self):
         self.__temps += 1
