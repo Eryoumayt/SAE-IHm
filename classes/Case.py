@@ -66,18 +66,3 @@ class Case():
             return False
         else:
             return True
-        
-        
-        
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    

@@ -39,6 +39,10 @@ class controller(QObject):
         self.view.get_selection_difficulte().get_btn_facile().clicked.connect(self.__on_difficulte_facile)
         self.view.get_selection_difficulte().get_btn_difficile().clicked.connect(self.__on_difficulte_difficile)
 
+        # Connexions page selection grille
+        self.view.get_selection_grille().grille_choisie.connect(self.__on_grille_choisie)
+        self.view.get_selection_grille().retour_demande.connect(self.__on_retour_menu)
+
         # Connexions sidebar
         self.view.get_menu_gauche().get_btn_verifier().clicked.connect(self.on_check)
         self.view.get_menu_gauche().get_btn_resoudre().clicked.connect(self.on_solver)
@@ -66,12 +70,15 @@ class controller(QObject):
     def __on_difficulte_facile(self):
         self.__difficulte_facile = True
         self.view.set_difficulte_facile(True)
-        self.new_game()
+        self.view.afficher_selection_grille()
 
     def __on_difficulte_difficile(self):
         self.__difficulte_facile = False
         self.view.set_difficulte_facile(False)
-        self.new_game()
+        self.view.afficher_selection_grille()
+
+    def __on_grille_choisie(self, chemin):
+        self.__charger_grille(chemin)
 
     def __on_retour_menu(self):
         self.view.afficher_difficulte()
@@ -130,7 +137,7 @@ class controller(QObject):
             QMessageBox.warning(self.view, "Attention", "Aucune grille chargee.")
             return
 
-        all_values = self.view.get_grille_widget().get_all_values()
+        entries = self.view.get_grille_widget().get_entries()
         grille_sauvegarde = {}
 
         for nom_motif, cases in self.donnees_brutes.items():
@@ -138,8 +145,14 @@ class controller(QObject):
             for case in cases:
                 row = case[0]
                 col = case[1]
-                val = all_values.get((row, col), case[2])
-                nouvelle_liste.append([row, col, val])
+                valeur_init = case[2]
+                entry = entries.get((row, col))
+                if entry is not None:
+                    texte = entry.text()
+                    valeur_joueur = int(texte) if texte.isdigit() else 0
+                    nouvelle_liste.append([row, col, 0, valeur_joueur])
+                else:
+                    nouvelle_liste.append([row, col, valeur_init, 0])
             grille_sauvegarde[nom_motif] = nouvelle_liste
 
         chemin, _ = QFileDialog.getSaveFileName(self.view, "Sauvegarder la grille", "", "Fichiers JSON (*.json)")
@@ -150,66 +163,41 @@ class controller(QObject):
 
     # -------------------------------------------------------- #
 
-    def __verifier_grille_depuis_interface(self) -> tuple:
-        """
-        Verification COMPLETE de la grille directement depuis les valeurs
-        de l'interface (QLineEdit + QLabel), sans dependre du modele.
+    def on_check(self):
+        if self.donnees_brutes is None:
+            return
 
-        Retourne (valide: bool, message_erreur: str)
-        """
+        valide, message = self.__verifier_grille_depuis_interface()
+        if valide:
+            QMessageBox.information(self.view, "Verification", "La grille est valide !")
+            self.view.arreter_chrono()
+        else:
+            QMessageBox.warning(self.view, "Verification", f"La grille n'est pas valide.\n{message}")
+
+    def __verifier_grille_depuis_interface(self) -> tuple:
+        """Verifie la grille directement depuis les valeurs affichees (QLineEdit + QLabel)"""
         all_values = self.view.get_grille_widget().get_all_values()
 
         # 1. Verifier que la grille est complete (pas de 0)
-        nb_total = len(all_values)
         nb_zeros = sum(1 for v in all_values.values() if v == 0)
         if nb_zeros > 0:
-            return (False, f"Grille incomplete : {nb_zeros} case(s) vide(s) sur {nb_total}")
+            return (False, f"Grille incomplete : {nb_zeros} case(s) vide(s)")
 
         # 2. Verifier les motifs (pas de doublons dans chaque motif)
         for nom_motif, cases in self.donnees_brutes.items():
-            valeurs_motif = []
-            for case in cases:
-                row, col = case[0], case[1]
-                val = all_values.get((row, col), 0)
-                valeurs_motif.append(val)
-            # Verifier doublons
+            valeurs_motif = [all_values.get((case[0], case[1]), 0) for case in cases]
             if len(valeurs_motif) != len(set(valeurs_motif)):
-                return (False, f"Doublon dans le motif {nom_motif} : valeurs = {valeurs_motif}")
+                return (False, f"Doublon dans le motif {nom_motif}")
 
-        # 3. Verifier le voisinage (8 voisins doivent etre differents)
+        # 3. Verifier le voisinage (8 voisins differents)
         decalages = [(-1,-1), (-1,0), (-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]
         for (row, col), val in all_values.items():
             for dr, dc in decalages:
                 voisin_val = all_values.get((row + dr, col + dc))
                 if voisin_val is not None and voisin_val == val:
-                    return (False, f"Voisinage : case({row},{col})={val} identique a voisin({row+dr},{col+dc})={voisin_val}")
+                    return (False, f"Voisinage: case({row},{col})={val} = voisin({row+dr},{col+dc})")
 
         return (True, "")
-
-    # -------------------------------------------------------- #
-
-    def on_check(self):
-        if self.donnees_brutes is None:
-            return
-
-        # Methode 1 : verification directe depuis l'interface (FIABLE)
-        valide, message = self.__verifier_grille_depuis_interface()
-
-        # Methode 2 : aussi mettre a jour le modele pour que is_valid() fonctionne
-        all_values = self.view.get_grille_widget().get_all_values()
-        for (row, col), valeur in all_values.items():
-            motif = self.model.get_motif(row, col)
-            if motif is not None:
-                case = motif.get_cases_by_pos(row, col)
-                if case is not None:
-                    case.valeur = valeur
-
-        if valide:
-            QMessageBox.information(self.view, "Verification", "La grille est valide !")
-            self.view.arreter_chrono()
-        else:
-            QMessageBox.warning(self.view, "Verification",
-                f"La grille n'est pas valide.\n\n{message}")
 
     # -------------------------------------------------------- #
 
@@ -231,23 +219,17 @@ class controller(QObject):
         self.view.get_menu_gauche().get_btn_resoudre().setEnabled(True)
 
         if resultat:
-            # Afficher la solution
+            # Afficher la solution dans l'interface
             self.view.get_grille_widget().afficher(grille)
             self.__reconnecter_signaux()
 
-            # Mettre a jour le modele avec la solution du solveur
-            for nom_motif, cases in grille.items():
-                for case_data in cases:
-                    row, col, val = case_data[0], case_data[1], case_data[2]
-                    motif = self.model.get_motif(row, col)
-                    if motif is not None:
-                        case = motif.get_cases_by_pos(row, col)
-                        if case is not None:
-                            case.valeur = val
-
-            # Mettre a jour donnees_brutes avec la solution
-            self.donnees_brutes = grille
-            self.view.set_grille_data(grille)
+            # Mettre a jour donnees_brutes avec les valeurs resolues
+            all_vals = self.view.get_grille_widget().get_all_values()
+            for nom_motif, cases in self.donnees_brutes.items():
+                for i, case_data in enumerate(cases):
+                    row, col = case_data[0], case_data[1]
+                    val = all_vals.get((row, col), 0)
+                    self.donnees_brutes[nom_motif][i] = [row, col, val]
 
             self.view.arreter_chrono()
             QMessageBox.information(self.view, "Resolution", "Solution trouvee !")
@@ -285,18 +267,30 @@ class controller(QObject):
         if self.donnees_brutes is None:
             return
 
-        all_values = self.view.get_grille_widget().get_all_values()
         entries = self.view.get_grille_widget().get_entries()
 
+        toutes_valeurs = {}
+        for nom_motif, cases in self.donnees_brutes.items():
+            for case in cases:
+                row = case[0]
+                col = case[1]
+                valeur_init = case[2]
+                entry = entries.get((row, col))
+                if entry is not None:
+                    texte = entry.text()
+                    val = int(texte) if texte.isdigit() and int(texte) != 0 else 0
+                else:
+                    val = valeur_init
+                if val != 0:
+                    toutes_valeurs[(row, col)] = val
+
         conflits = set()
-        for (row, col), val in all_values.items():
-            if val == 0:
-                continue
+        for (row, col), val in toutes_valeurs.items():
             for dr in [-1, 0, 1]:
                 for dc in [-1, 0, 1]:
                     if dr == 0 and dc == 0:
                         continue
-                    voisin_val = all_values.get((row + dr, col + dc))
+                    voisin_val = toutes_valeurs.get((row + dr, col + dc))
                     if voisin_val is not None and voisin_val == val:
                         if (row, col) in entries:
                             conflits.add((row, col))
